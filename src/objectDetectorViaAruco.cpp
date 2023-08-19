@@ -28,8 +28,7 @@ arucoPose::arucoPose(){
 }
 
 void arucoPose::runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,
-                                                   cv::Mat& FrameDetectR,
-                                                   cv::Mat& ResultFrame){
+                                                   cv::Mat& FrameDetectR){
     FramefromCameraL=FrameDetectL.clone();
     FramefromCameraR=FrameDetectR.clone();
     try {
@@ -372,26 +371,26 @@ void arucoPose::outputArucoPosture(){
                 double distance20,distance21;
                 double disX1,disX2,disY1,disY2,disZ1,disZ2;
 
-if(TagL.at(countofTag).at(i).markId==ObjectForDetecting["objectmarkId"].as<unsigned int>()){
-    output.at(ObjectForDetecting["objectId"].as<int>()).objectId=ObjectForDetecting["objectId"].as<int>();
- output.at(ObjectForDetecting["objectId"].as<int>()).outputObject.objectMarkId=TagL.at(countofTag).at(j).markId;
-  output.at(ObjectForDetecting["objectId"].as<int>()).outputObject.objectPosture=ArucoTagPostureInCameraLeft;
-  YAML::Node object1=ObjectForDetecting["object1"];
-  const YAML::Node& sizeNode=object1["shape_size"];
-  float size[3];
-  if(sizeNode.IsSequence()){
-      YAML::const_iterator it=sizeNode.begin();
-//      std::vector<float> sizeVector;
-//      for(const YAML::Node size:sizeNode)
-//          sizeVector.push_back(size.as<float>());
+//if(TagL.at(countofTag).at(i).markId==ObjectForDetecting["objectmarkId"].as<unsigned int>()){
+//    output.at(ObjectForDetecting["objectId"].as<int>()).objectId=ObjectForDetecting["objectId"].as<int>();
+// output.at(ObjectForDetecting["objectId"].as<int>()).outputObject.objectMarkId=TagL.at(countofTag).at(j).markId;
+//  output.at(ObjectForDetecting["objectId"].as<int>()).outputObject.objectPosture=ArucoTagPostureInCameraLeft;
+//  YAML::Node object1=ObjectForDetecting["object1"];
+//  const YAML::Node& sizeNode=object1["shape_size"];
+//  float size[3];
+//  if(sizeNode.IsSequence()){
+//      YAML::const_iterator it=sizeNode.begin();
+////      std::vector<float> sizeVector;
+////      for(const YAML::Node size:sizeNode)
+////          sizeVector.push_back(size.as<float>());
 
-      for(unsigned int i=0;i<sizeNode.size();i++){
-          size[i]=it->as<float>();
-          output.at(ObjectForDetecting["objectId"].as<int>()).shape_size_obj[i]=it->as<float>();
-          it++;
-      }
-  }
-}
+//      for(unsigned int i=0;i<sizeNode.size();i++){
+//          size[i]=it->as<float>();
+//          output.at(ObjectForDetecting["objectId"].as<int>()).shape_size_obj[i]=it->as<float>();
+//          it++;
+//      }
+//  }
+//}
                 if(TagL.at(countofTag).at(i).markId==20){
                     //            std::cout<<TagL.at(countofTag).at(i).centerPoint<<";"<<TagR.at(countofTag).at(i).centerPoint<<std::endl;
                     disX1=TagL.at(countofTag).at(i).reconstructCenterPoint.x;

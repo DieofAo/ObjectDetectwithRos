@@ -49,9 +49,11 @@ struct object{
 
 class arucoPose{
 public:
+    cv::Mat FramefromCameraL,FramefromCameraR;
+
     arucoPose();
     ~arucoPose();
-    void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR,cv::Mat& ResultFrame);
+    void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR);
 
 private:
     std::vector<std::vector<Tag>> TagL,TagR;
@@ -59,7 +61,6 @@ private:
     std::vector<object> output;
     unsigned int countofTag=0;
     cv::Mat intrinsic_matrixL,distortion_matrixL,intrinsic_matrixR,distortion_matrixR,transMatrixFromR2L;
-    cv::Mat FramefromCameraL,FramefromCameraR;
     YAML::Node ObjectForDetecting;
 
 

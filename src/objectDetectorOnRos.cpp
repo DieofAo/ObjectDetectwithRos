@@ -18,7 +18,8 @@ void objectDetectorOnRos::run(){
     while (1) {
         if(steroCamera.imageRetrive(leftFrame,rightFrame)==0)
             break;
-        PositionDetect.runDetectArucoTagPosByStereoCamera(leftFrame,rightFrame,ArucoDetectedLeftFrame);
+        PositionDetect.runDetectArucoTagPosByStereoCamera(leftFrame,rightFrame);
+        ArucoDetectedLeftFrame=PositionDetect.FramefromCameraL;
         rosImageView(leftFrame,rightFrame,ArucoDetectedLeftFrame);
 
     }

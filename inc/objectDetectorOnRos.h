@@ -19,7 +19,7 @@ public:
     image_transport::ImageTransport _it;
     image_transport::Publisher *pubLRaw,*pubRRaw,*pubResult;
 
-    cv::Mat originalLeftFrame,originalRightFrame,ArucoDetectedLeftFrame,ObjectResult;
+    cv::Mat originalLeftFrame,originalRightFrame,ArucoDetectedLeftFrame;
 
 
     objectDetectorOnRos(ros::NodeHandle& nh,int Id);
