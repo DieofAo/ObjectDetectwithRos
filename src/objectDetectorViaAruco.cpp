@@ -31,7 +31,8 @@ void arucoPose::runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,
                                                    cv::Mat& FrameDetectR){
     FramefromCameraL=FrameDetectL.clone();
     FramefromCameraR=FrameDetectR.clone();
-    try {
+//    resultFrame=&result;
+//    try {
         std::thread left=std::thread([&](){
             detectArucoTagPosition(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,TagL.at(countofTag));
         });
@@ -62,10 +63,10 @@ void arucoPose::runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,
         if(countofTag<(NumFrameForMean-1)){
             countofTag++;
         }
-    } catch (...) {
-//        cv::namedWindow("ReconstructArucoTagPose", 1);
-//        imshow("ReconstructArucoTagPose", FramefromCameraL);
-    }
+//    } catch (...) {
+////        cv::namedWindow("ReconstructArucoTagPose", 1);
+////        imshow("ReconstructArucoTagPose", FramefromCameraL);
+//    }
 }
 
 
@@ -94,13 +95,17 @@ void arucoPose::detectArucoTagPosition(cv::Mat& FrameDetect,
             singalFrameDetected.at(i).markCorners=markCorners.at(i);
         }
     }
-
+    if(markIds.size()==0){
+        singalFrameDetected.clear();
+//        singalFrameDetected.push_back(emptyTag);
+//        std::cout<<singalFrameDetected.size()<<std::endl;
+    }
 }
 
 
 void arucoPose::matchArucoTagFromSingalFrame(std::vector<Tag>& RotVecofTagL,
                                              std::vector<Tag>& RotVecofTagR){
-    float ForNoneImageInput=TagL.at(countofTag).at(0).markCorners.at(0).x;
+//    float ForNoneImageInput=TagL.at(countofTag).at(0).markCorners.at(0).x;
 
     DimensionBasedMarkIdTagL.resize(ArucoTagCount);
     DimensionBasedMarkIdTagR.resize(ArucoTagCount);
@@ -430,9 +435,10 @@ void arucoPose::outputArucoPosture(){
             //                            cv::aruco::drawDetectedMarkers(FramefromCameraL,TagL.at(countofTag).at(j).markCorners,TagL.at(countofTag).at(j).markId);
             cv::aruco::drawAxis(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,rotationDraw[i],tevsDraw[i],0.05);
         }
-//        cv::namedWindow("ReconstructArucoTagPose", 1);
-//        imshow("ReconstructArucoTagPose", FramefromCameraL);
-        //    cv::waitKey(0);
+        cv::namedWindow("ReconstructArucoTagPose", 1);
+        imshow("ReconstructArucoTagPose", FramefromCameraL);
 
     }
+    cv::namedWindow("testFrame", 1);
+    imshow("testFrame", FramefromCameraL);
 }

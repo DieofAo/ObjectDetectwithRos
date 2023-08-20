@@ -28,7 +28,7 @@ include_directories(
 
 
 set(src
-    ArucoTagDetect.cpp
+    object_detector_node.cpp
     src/camera.cpp
     src/objectDetectorViaAruco.cpp
     src/objectDetectorOnRos.cpp)
@@ -39,9 +39,9 @@ catkin_package(     #此命令指定了生成的可执行性程序路径，到/d
   std_msgs
  )
 
-add_executable(${PROJECT_NAME} ${src})
+add_executable(${PROJECT_NAME}_node ${src})
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}_node
 ${catkin_LIBRARIES}
 ${OpenCV_LIBS}
 yaml-cpp

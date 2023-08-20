@@ -5,6 +5,8 @@ objectDetectorOnRos::~objectDetectorOnRos(){
 
 objectDetectorOnRos::objectDetectorOnRos(ros::NodeHandle& nh,int Id):_nh(),_it(_nh){
     cameraId=Id;
+    PositionDetect=new arucoPose;
+    steroCamera=new camera(cameraId);
     _nh=nh;
     pubLRaw=new image_transport::Publisher(_it.advertise("LRaw", 5));
     pubRRaw=new image_transport::Publisher(_it.advertise("RRaw", 5));
@@ -14,16 +16,16 @@ objectDetectorOnRos::objectDetectorOnRos(ros::NodeHandle& nh,int Id):_nh(),_it(_
 }
 void objectDetectorOnRos::run(){
     cv::Mat leftFrame,rightFrame;
-    camera steroCamera(cameraId);
-    while (1) {
-        if(steroCamera.imageRetrive(leftFrame,rightFrame)==0)
-            break;
-        PositionDetect.runDetectArucoTagPosByStereoCamera(leftFrame,rightFrame);
-        ArucoDetectedLeftFrame=PositionDetect.FramefromCameraL;
-        rosImageView(leftFrame,rightFrame,ArucoDetectedLeftFrame);
 
-    }
+    steroCamera->imageRetrive(leftFrame,rightFrame);
+
+    PositionDetect->runDetectArucoTagPosByStereoCamera(leftFrame,rightFrame);
+
+    ArucoDetectedLeftFrame=PositionDetect->FramefromCameraL;
+    rosImageView(leftFrame,rightFrame,ArucoDetectedLeftFrame);
+
 }
+
 
 void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
                                        cv::Mat& imageRRaw,
@@ -36,12 +38,10 @@ void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
     if (_nh.ok()) {
         ros::Time time = ros::Time::now();
         header.stamp = time;             //图像里头的时间戳
-
         //convert the mat object to the ros image msg with the header
-        msgLRaw = cv_bridge::CvImage(header, "bgr8", imageLRaw).toImageMsg();   //生成图像消息
-        msgRRaw = cv_bridge::CvImage(header, "bgr8", imageRRaw).toImageMsg();   //生成图像消息
-
-        msgResult = cv_bridge::CvImage(header, "bgr8", imageResult).toImageMsg();   //生成图像消息
+        msgLRaw = cv_bridge::CvImage(header, "bgr8", imageLRaw).toImageMsg();
+        msgRRaw = cv_bridge::CvImage(header, "bgr8", imageRRaw).toImageMsg();
+        msgResult = cv_bridge::CvImage(header, "bgr8", imageResult).toImageMsg();
 
         pubLRaw->publish(msgLRaw);
         pubRRaw->publish(msgRRaw);

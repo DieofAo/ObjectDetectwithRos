@@ -50,9 +50,11 @@ struct object{
 class arucoPose{
 public:
     cv::Mat FramefromCameraL,FramefromCameraR;
+    cv::Mat *resultFrame;
 
     arucoPose();
     ~arucoPose();
+//    void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR,cv::Mat& result);
     void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR);
 
 private:

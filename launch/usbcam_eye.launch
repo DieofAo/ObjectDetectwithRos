@@ -1,0 +1,5 @@
+<launch>
+  <arg name="gloabalCameraId" default="0"/>
+  <arg name="gloabalCameraId" default="1"/>
+
+</launch>

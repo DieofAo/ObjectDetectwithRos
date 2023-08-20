@@ -14,7 +14,8 @@
 class objectDetectorOnRos{
 public:
     int cameraId;
-    arucoPose PositionDetect;
+    arucoPose *PositionDetect;
+    camera *steroCamera;
     ros::NodeHandle _nh;
     image_transport::ImageTransport _it;
     image_transport::Publisher *pubLRaw,*pubRRaw,*pubResult;
