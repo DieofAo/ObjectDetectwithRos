@@ -18,6 +18,12 @@ arucoPose::arucoPose(){
                         -0.0023,1.0,-0.0066,0.0304,
                         1.5806e-4,0.0066,1.0,-0.1852,
                         0,0,0,1);
+    projMatrixL=cv::Mat::zeros(3,4,CV_64F);
+    projMatrixR=cv::Mat::zeros(3,4,CV_64F);
+    intrinsic_matrixL.copyTo(projMatrixL(cv::Rect(0,0,3,3)));//transfer 3*3 intrinsMatrix to 3*4 form
+    intrinsic_matrixR.copyTo(projMatrixR(cv::Rect(0,0,3,3)));
+    projMatrixR=projMatrixR*transMatrixFromR2L;//changable
+
 
     TagL.resize(NumFrameForMean,std::vector<Tag>(ArucoTagCount));
     TagR.resize(NumFrameForMean,std::vector<Tag>(ArucoTagCount));
@@ -44,7 +50,21 @@ void arucoPose::runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,
 //        detectArucoTagPosition(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,TagL.at(countofTag));
 //        detectArucoTagPosition(FramefromCameraR,intrinsic_matrixR,distortion_matrixR,TagR.at(countofTag));
         matchArucoTagFromSingalFrame(TagL.at(countofTag),TagR.at(countofTag));//matched the same id point of singal frame between right frame and left frame
-        TriangulationRangingMethod();
+//        try {
+            TriangulationRangingMethod();
+
+//        } catch (...) {
+//            std::cout<<"TriangulationRangingMethod error"<<std::endl;
+
+//            std::cout<< "TagL.at(countofTag).size():"<<TagL.at(countofTag).size()<<std::endl;
+//            std::cout<< "TagL.at(countofTag).at(0).markId:"<<TagL.at(countofTag).at(0).markId<<std::endl;
+
+//            std::cout<< "TagR.at(countofTag).size():"<<TagR.at(countofTag).size()<<std::endl;
+//            std::cout<< "TagR.at(countofTag).at(0).markId:"<<TagR.at(countofTag).at(0).markId<<std::endl;
+
+
+//            std::cout<<TagL.at(countofTag).at(0).markCorners<<";"<<TagR.at(countofTag).at(0).markCorners<<std::endl;
+//        }
         if(countofTag==(NumFrameForMean-1)){
             TransferFrameBasedDimension2MarkId();
             ProcessDimensionBasedMarkId();//get quaternion with matched frame from multiframe
@@ -99,45 +119,67 @@ void arucoPose::detectArucoTagPosition(cv::Mat& FrameDetect,
         singalFrameDetected.clear();
 //        singalFrameDetected.push_back(emptyTag);
 //        std::cout<<singalFrameDetected.size()<<std::endl;
+
     }
+
 }
 
 
 void arucoPose::matchArucoTagFromSingalFrame(std::vector<Tag>& RotVecofTagL,
                                              std::vector<Tag>& RotVecofTagR){
 //    float ForNoneImageInput=TagL.at(countofTag).at(0).markCorners.at(0).x;
-
+    DimensionBasedMarkIdTagL.clear();
+    DimensionBasedMarkIdTagR.clear();
     DimensionBasedMarkIdTagL.resize(ArucoTagCount);
-    DimensionBasedMarkIdTagR.resize(ArucoTagCount);
-    for(size_t i=0;i<RotVecofTagL.size();i++){
+    DimensionBasedMarkIdTagR.resize(ArucoTagCount);//changeable the position
+    for(int i=0;i<RotVecofTagL.size();i++){
         if(RotVecofTagL.at(i).markId==0){
             RotVecofTagL.erase(RotVecofTagL.begin()+i,RotVecofTagL.begin()+i+1);
             if(i!=0)
                 i--;
         }
-        int flag=0;
-        for(size_t j=0;j<RotVecofTagR.size();j++){
-            if(RotVecofTagL.at(i).markId==RotVecofTagR.at(j).markId){
-                flag=1;
-                break;
-            }
-        }
-        if(!flag){
-            RotVecofTagL.erase(RotVecofTagL.begin()+i,RotVecofTagL.begin()+i+1);
+    }
+    for(int i=0;i<RotVecofTagR.size();i++){
+        if(RotVecofTagR.at(i).markId==0){
+            RotVecofTagR.erase(RotVecofTagR.begin()+i,RotVecofTagR.begin()+i+1);
             if(i!=0)
                 i--;
         }
-    }//matched same point for rotvecL
-    for(size_t i=0;i<RotVecofTagR.size();i++){
-        for(size_t j=0;j<RotVecofTagL.size();j++){
-            if(RotVecofTagR.at(i).markId==RotVecofTagL.at(j).markId)
-                break;
-            if(j==(RotVecofTagL.size()-1)){
-                RotVecofTagR.erase(RotVecofTagR.begin()+i,RotVecofTagR.begin()+i+1);
-                i--;
+    }//changable
+
+
+    for(int i=0;i<RotVecofTagL.size();i++){
+
+        int flag=0;
+
+            for(size_t j=0;j<RotVecofTagR.size();j++){
+                if(RotVecofTagL.at(i).markId==RotVecofTagR.at(j).markId){
+                    flag=1;
+                    break;
+                }
             }
+
+        if(!flag){
+            RotVecofTagL.erase(RotVecofTagL.begin()+i,RotVecofTagL.begin()+i+1);
+
+                i--;
         }
-    }//matched same point for rotvecR
+    }//matched same point for rotvecL
+    if(RotVecofTagL.size()){
+        for(int i=0;i<RotVecofTagR.size();i++){
+            for(size_t j=0;j<RotVecofTagL.size();j++){
+                if(RotVecofTagR.at(i).markId==RotVecofTagL.at(j).markId)
+                    break;
+                if(j==(RotVecofTagL.size()-1)){
+                    RotVecofTagR.erase(RotVecofTagR.begin()+i,RotVecofTagR.begin()+i+1);
+                    i--;
+                }
+            }
+        }//matched same point for rotvecR
+    }
+    else{
+        RotVecofTagR.clear();
+    }
 }
 
 
@@ -147,15 +189,7 @@ void arucoPose::TriangulationRangingMethod(){
         crossCenterPoint(TagL.at(countofTag).at(i));
         crossCenterPoint(TagR.at(countofTag).at(i));//center point position from singal frame with singal point
     }//center point position from singal frame
-    cv::Mat projMatrixL,projMatrixR;
     cv::Mat points4D;
-    projMatrixL=cv::Mat::zeros(3,4,CV_64F);
-    projMatrixR=cv::Mat::zeros(3,4,CV_64F);
-    intrinsic_matrixL.copyTo(projMatrixL(cv::Rect(0,0,3,3)));//transfer 3*3 intrinsMatrix to 3*4 form
-    intrinsic_matrixR.copyTo(projMatrixR(cv::Rect(0,0,3,3)));
-
-
-    projMatrixR=projMatrixR*transMatrixFromR2L;//put projectionMatrix in all
 
     for (size_t i=0;i<TagL.at(countofTag).size();i++){
         for(size_t j=0;j<TagR.at(countofTag).size();j++){
@@ -309,7 +343,8 @@ void arucoPose::AverageQuatertionfromMatchedMultiflame(std::vector<Tag*> BasedId
     for (size_t q=0; q<quaternions.size(); ++q)
         A += quaternions[q] * quaternions[q].transpose();
     // normalise with the number of quaternions
-    A /= quaternions.size();
+    if(quaternions.size()!=0){
+        A /= quaternions.size();
     // Compute the SVD of this 4x4 matrix
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
     Eigen::VectorXd singularValues = svd.singularValues();
@@ -336,6 +371,7 @@ void arucoPose::AverageQuatertionfromMatchedMultiflame(std::vector<Tag*> BasedId
     averageResult(1) = U(1, largestEigenValueIndex);
     averageResult(2) = U(2, largestEigenValueIndex);
     averageResult(3) = U(3, largestEigenValueIndex);
+    }
 }
 
 
@@ -435,8 +471,8 @@ void arucoPose::outputArucoPosture(){
             //                            cv::aruco::drawDetectedMarkers(FramefromCameraL,TagL.at(countofTag).at(j).markCorners,TagL.at(countofTag).at(j).markId);
             cv::aruco::drawAxis(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,rotationDraw[i],tevsDraw[i],0.05);
         }
-        cv::namedWindow("ReconstructArucoTagPose", 1);
-        imshow("ReconstructArucoTagPose", FramefromCameraL);
+//        cv::namedWindow("ReconstructArucoTagPose", 1);
+//        imshow("ReconstructArucoTagPose", FramefromCameraL);
 
     }
     cv::namedWindow("testFrame", 1);

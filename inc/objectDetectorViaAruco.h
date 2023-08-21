@@ -63,6 +63,8 @@ private:
     std::vector<object> output;
     unsigned int countofTag=0;
     cv::Mat intrinsic_matrixL,distortion_matrixL,intrinsic_matrixR,distortion_matrixR,transMatrixFromR2L;
+        cv::Mat projMatrixL,projMatrixR;
+
     YAML::Node ObjectForDetecting;
 
 
