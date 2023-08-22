@@ -6,7 +6,10 @@ int main(int argc, char** argv){
     ros::init(argc, argv, "objectDetectImage_node");
     ros::NodeHandle nh("~");
 
-    int globalCameraId=0,handCameraId=1;
+    int globalCameraId,handCameraId;
+    nh.getParam("gloabalCameraId",globalCameraId);
+    nh.getParam("handCameraId",handCameraId);
+
 //    objectDetectorOnRos global_detector(nh,globalCameraId),hand_detector(nh,handCameraId);
     objectDetectorOnRos global_detector(nh,globalCameraId);
 

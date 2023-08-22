@@ -8,8 +8,8 @@ cv::Mat leftFrame,rightFrame;
 
 
 int main(){
-
-    arucoPose PositionDetect;
+std::string path="/home/jqzlca/workspace/catkin_ws/src/jqz_ws/object_detector/config/object.yaml";
+    arucoPose PositionDetect(path);
     camera steroCamera(0);
 
     while (1) {

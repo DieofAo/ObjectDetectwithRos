@@ -11,10 +11,10 @@
 
 
 const unsigned int ArucoTagCount=48;
-const unsigned int NumFrameForMean=10;
+const unsigned int NumFrameForMean=30;
 const unsigned int MiniumNumFrameForMean=NumFrameForMean/2;
 const float PrintedArucoSize=0.029;
-const unsigned int objectNum=3;
+//const unsigned int objectNum=3;
 
 struct Tag{
     unsigned int markId;
@@ -52,7 +52,7 @@ public:
     cv::Mat FramefromCameraL,FramefromCameraR;
     cv::Mat *resultFrame;
 
-    arucoPose();
+    arucoPose(std::string& configYaml);
     ~arucoPose();
 //    void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR,cv::Mat& result);
     void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR);
@@ -66,6 +66,7 @@ private:
         cv::Mat projMatrixL,projMatrixR;
 
     YAML::Node ObjectForDetecting;
+    unsigned int objectNum;
 
 
 

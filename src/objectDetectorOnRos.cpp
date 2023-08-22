@@ -4,10 +4,14 @@ objectDetectorOnRos::~objectDetectorOnRos(){
 }
 
 objectDetectorOnRos::objectDetectorOnRos(ros::NodeHandle& nh,int Id):_nh(),_it(_nh){
-    cameraId=Id;
-    PositionDetect=new arucoPose;
-    steroCamera=new camera(cameraId);
     _nh=nh;
+    cameraId=Id;
+    config_Yaml="";
+    _nh.getParam("config_Yaml",config_Yaml);
+
+    PositionDetect=new arucoPose(config_Yaml);
+    steroCamera=new camera(cameraId);
+
     pubLRaw=new image_transport::Publisher(_it.advertise("LRaw", 5));
     pubRRaw=new image_transport::Publisher(_it.advertise("RRaw", 5));
     pubResult=new image_transport::Publisher(_it.advertise("Result", 5));
@@ -16,6 +20,7 @@ objectDetectorOnRos::objectDetectorOnRos(ros::NodeHandle& nh,int Id):_nh(),_it(_
 }
 void objectDetectorOnRos::run(){
     cv::Mat leftFrame,rightFrame;
+
 
     steroCamera->imageRetrive(leftFrame,rightFrame);
 

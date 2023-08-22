@@ -19,6 +19,7 @@ public:
     ros::NodeHandle _nh;
     image_transport::ImageTransport _it;
     image_transport::Publisher *pubLRaw,*pubRRaw,*pubResult;
+    std::string config_Yaml;
 
     cv::Mat originalLeftFrame,originalRightFrame,ArucoDetectedLeftFrame;
 
