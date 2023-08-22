@@ -1,6 +1,6 @@
 <launch>
   <arg name="detect_node_name" default="object_detector_node"/>
-  <arg name="config_Yaml" default="/home/jqzlca/workspace/catkin_ws/src/jqz_ws/object_detector/config/object.yaml"/>
+  <arg name="config_Yaml" default="$(find object_detector)/config/object.yaml"/>
   <arg name="gloabalCameraId" default="0"/>
   <arg name="handCameraId" default="1"/>
   
