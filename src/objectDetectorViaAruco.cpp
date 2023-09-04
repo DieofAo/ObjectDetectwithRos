@@ -5,19 +5,19 @@ arucoPose::~arucoPose(){
 
 }
 
-arucoPose::arucoPose(std::string& configYaml){
+arucoPose::arucoPose(std::string& configYaml,std::vector<struct msgPose>& outputObjectInformation){
     distortion_matrixL=(cv::Mat_<double>(5,1)<<0.0128,-0.0343,0.0023,-0.00011,0);
     intrinsic_matrixL=(cv::Mat_<double>(3,3)<<921.6992,0,653.3826,
-                       0,918.4418,364.1299,
-                       0,0,1);
+                         0,918.4418,364.1299,
+                         0,0,1);
     distortion_matrixR=(cv::Mat_<double>(5,1)<<0.0135,-0.0339,0.0032,-0.00011,0);
     intrinsic_matrixR=(cv::Mat_<double>(3,3)<<920.5909,0,646.5033,
-                       0,917.4791,370.2785,
-                       0,0,1);
+                         0,917.4791,370.2785,
+                         0,0,1);
     transMatrixFromR2L=(cv::Mat_<double>(4,4)<<1.0,0.0023,1.4284e-4,-65.2972,
-                        -0.0023,1.0,-0.0066,0.0304,
-                        1.5806e-4,0.0066,1.0,-0.1852,
-                        0,0,0,1);
+                          -0.0023,1.0,-0.0066,0.0304,
+                          1.5806e-4,0.0066,1.0,-0.1852,
+                          0,0,0,1);
     projMatrixL=cv::Mat::zeros(3,4,CV_64F);
     projMatrixR=cv::Mat::zeros(3,4,CV_64F);
     intrinsic_matrixL.copyTo(projMatrixL(cv::Rect(0,0,3,3)));//transfer 3*3 intrinsMatrix to 3*4 form
@@ -29,11 +29,13 @@ arucoPose::arucoPose(std::string& configYaml){
     TagR.resize(NumFrameForMean,std::vector<Tag>(ArucoTagCount));
     DimensionBasedMarkIdTagL.resize(ArucoTagCount);
     DimensionBasedMarkIdTagR.resize(ArucoTagCount);
+
     ObjectForDetecting=YAML::LoadFile(configYaml);
 
-//    ObjectForDetecting=YAML::LoadFile("/home/jqzlca/workspace/catkin_ws/src/jqz_ws/object_detector/config/object.yaml");
     objectNum=ObjectForDetecting["objectNum"].as<unsigned int>();
     output.resize(objectNum);
+
+    _outputObjectInformation=outputObjectInformation;
 
 }
 
@@ -41,8 +43,6 @@ void arucoPose::runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,
                                                    cv::Mat& FrameDetectR){
     FramefromCameraL=FrameDetectL.clone();
     FramefromCameraR=FrameDetectR.clone();
-    //    resultFrame=&result;
-    //    try {
     std::thread left=std::thread([&](){
         detectArucoTagPosition(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,TagL.at(countofTag));
     });
@@ -51,26 +51,8 @@ void arucoPose::runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,
     });
     left.join();
     right.join();
-    //        cv::namedWindow("test",1);
-    //        imshow("test",FramefromCameraL);
-    //        detectArucoTagPosition(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,TagL.at(countofTag));
-    //        detectArucoTagPosition(FramefromCameraR,intrinsic_matrixR,distortion_matrixR,TagR.at(countofTag));
     matchArucoTagFromSingalFrame(TagL.at(countofTag),TagR.at(countofTag));//matched the same id point of singal frame between right frame and left frame
-    //        try {
     TriangulationRangingMethod();
-
-    //        } catch (...) {
-    //            std::cout<<"TriangulationRangingMethod error"<<std::endl;
-
-    //            std::cout<< "TagL.at(countofTag).size():"<<TagL.at(countofTag).size()<<std::endl;
-    //            std::cout<< "TagL.at(countofTag).at(0).markId:"<<TagL.at(countofTag).at(0).markId<<std::endl;
-
-    //            std::cout<< "TagR.at(countofTag).size():"<<TagR.at(countofTag).size()<<std::endl;
-    //            std::cout<< "TagR.at(countofTag).at(0).markId:"<<TagR.at(countofTag).at(0).markId<<std::endl;
-
-
-    //            std::cout<<TagL.at(countofTag).at(0).markCorners<<";"<<TagR.at(countofTag).at(0).markCorners<<std::endl;
-    //        }
     if(countofTag==(NumFrameForMean-1)){
         TransferFrameBasedDimension2MarkId();
         ProcessDimensionBasedMarkId();//get quaternion with matched frame from multiframe
@@ -89,10 +71,7 @@ void arucoPose::runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,
     if(countofTag<(NumFrameForMean-1)){
         countofTag++;
     }
-    //    } catch (...) {
-    ////        cv::namedWindow("ReconstructArucoTagPose", 1);
-    ////        imshow("ReconstructArucoTagPose", FramefromCameraL);
-    //    }
+
 }
 
 
@@ -123,8 +102,6 @@ void arucoPose::detectArucoTagPosition(cv::Mat& FrameDetect,
     }
     if(markIds.size()==0){
         singalFrameDetected.clear();
-        //        singalFrameDetected.push_back(emptyTag);
-        //        std::cout<<singalFrameDetected.size()<<std::endl;
 
     }
 
@@ -133,7 +110,6 @@ void arucoPose::detectArucoTagPosition(cv::Mat& FrameDetect,
 
 void arucoPose::matchArucoTagFromSingalFrame(std::vector<Tag>& RotVecofTagL,
                                              std::vector<Tag>& RotVecofTagR){
-    //    float ForNoneImageInput=TagL.at(countofTag).at(0).markCorners.at(0).x;
     DimensionBasedMarkIdTagL.clear();
     DimensionBasedMarkIdTagR.clear();
     DimensionBasedMarkIdTagL.resize(ArucoTagCount);
@@ -389,6 +365,7 @@ void arucoPose::outputArucoPosture(){
     std::vector<cv::Vec3d> rotationDraw,tevsDraw;
 
     output.clear();
+    _outputObjectInformation.clear();
     output.resize(objectNum);
 
     //    int num2=0;
@@ -412,85 +389,43 @@ void arucoPose::outputArucoPosture(){
             tevsDraw.push_back(newTvecs/1000);
 
 
-
             YAML::Node object;
             if(TagL.at(countofTag).at(j).markId==ObjectForDetecting["object1"]["objectmarkId"].as<unsigned int>())
                 object=ObjectForDetecting["object1"];
-            else if(TagL.at(countofTag).at(j).markId==ObjectForDetecting["object2"]["objectmarkId"].as<unsigned int>()){
+            else if(TagL.at(countofTag).at(j).markId==ObjectForDetecting["object2"]["objectmarkId"].as<unsigned int>())
                 object=ObjectForDetecting["object2"];
-                output.at(object["objectId"].as<int>()).objectId=object["objectId"].as<int>();
-                output.at(object["objectId"].as<int>()).outputObject.objectMarkId=TagL.at(countofTag).at(j).markId;
-                output.at(object["objectId"].as<int>()).outputObject.objectTag=TagL.at(countofTag).at(j);
-                output.at(object["objectId"].as<int>()).outputObject.objectPosture=ArucoTagPostureInCameraLeft;
-                const YAML::Node& sizeNode=object["shape_size"];
-                float size[3];
-                if(sizeNode.IsSequence()){
-                    YAML::const_iterator it=sizeNode.begin();
-                    //      std::vector<float> sizeVector;
-                    //      for(const YAML::Node size:sizeNode)
-                    //          sizeVector.push_back(size.as<float>());
+            output.at(object["objectId"].as<int>()).objectId=object["objectId"].as<int>();
+            output.at(object["objectId"].as<int>()).outputObject.objectMarkId=TagL.at(countofTag).at(j).markId;
+            output.at(object["objectId"].as<int>()).outputObject.objectTag=TagL.at(countofTag).at(j);
+            output.at(object["objectId"].as<int>()).outputObject.objectPosture=ArucoTagPostureInCameraLeft;
+            const YAML::Node& sizeNode=object["shape_size"];
+            float size[3];
+            if(sizeNode.IsSequence()){
+                YAML::const_iterator it=sizeNode.begin();
+                //      std::vector<float> sizeVector;
+                //      for(const YAML::Node size:sizeNode)
+                //          sizeVector.push_back(size.as<float>());
 
-                    for(unsigned int i=0;i<sizeNode.size();i++){
-                        size[i]=it->as<float>();
-                        output.at(object["objectId"].as<int>()).shape_size_obj[i]=it->as<float>();
-                        it++;
-                    }
+                for(unsigned int i=0;i<sizeNode.size();i++){
+                    size[i]=it->as<float>();
+                    output.at(object["objectId"].as<int>()).shape_size_obj[i]=it->as<float>();
+                    it++;
                 }
-
-                testmarkCorners.push_back(output.at(object["objectId"].as<int>()).outputObject.objectTag.markCorners);
-                testmarkIds.push_back(output.at(object["objectId"].as<int>()).outputObject.objectTag.markId);
             }
 
 
-            //            for(size_t i=0;i<TagL.at(countofTag).size();i++){
-            //                std::vector<std::vector<cv::Point2f>> testmarkCorners;
-            //                std::vector<int> testmarkIds;
-            //                //        if(TagL.at(countofTag).at(i).markId==20){
-            //                //            cv::circle(FramefromCameraL,TagL.at(countofTag).at(i).centerPoint,5,cv::Scalar(0,0,255),-1);
-            //                //            std::cout<<TagL.at(countofTag).at(i).markCorners.at(0).x<<", "<<TagL.at(countofTag).at(i).markCorners.at(0).y<<", ";
-            //                //            std::cout<<TagL.at(countofTag).at(i).centerPoint.x<<", "<<TagL.at(countofTag).at(i).centerPoint.y<<std::endl;
-            //                //        }
-            //                double distance20,distance21;
-            //                double disX1,disX2,disY1,disY2,disZ1,disZ2;
+            //config the outPut msg information of objectPose with messageRos__ever frame ever object
+            output.at(object["objectId"].as<int>()).outputObject.outputObjectPose=Eigen::Quaterniond(ArucoTagPostureInCameraLeft.rotation());
+            struct msgPose objectForMsg;
+            objectForMsg.pose.outputObjectPose=output.at(object["objectId"].as<int>()).outputObject.outputObjectPose;
+            objectForMsg.objectId=object["objectId"].as<int>();
+            _outputObjectInformation.push_back(objectForMsg);
 
-
-            //                if(TagL.at(countofTag).at(i).markId==20){
-            //                    //            std::cout<<TagL.at(countofTag).at(i).centerPoint<<";"<<TagR.at(countofTag).at(i).centerPoint<<std::endl;
-            //                    disX1=TagL.at(countofTag).at(i).reconstructCenterPoint.x;
-            //                    disY1=TagL.at(countofTag).at(i).reconstructCenterPoint.y;
-            //                    disZ1=TagL.at(countofTag).at(i).reconstructCenterPoint.z;
-            //                    distance20=sqrt(disX1*disX1+disY1*disY1+disZ1*disZ1);
-            //                    cornerL=TagL.at(countofTag).at(i).markCorners;
-            //                    idL=TagL.at(countofTag).at(i).markId;
-
-            //                    num2=1;
-
-
-            //                }
-            //                if(TagL.at(countofTag).at(i).markId==21&&num2){
-            //                    disX2=TagL.at(countofTag).at(i).reconstructCenterPoint.x;
-            //                    disY2=TagL.at(countofTag).at(i).reconstructCenterPoint.y;
-            //                    disZ2=TagL.at(countofTag).at(i).reconstructCenterPoint.z;
-            //                    distance21=sqrt(disX2*disX2+disY2*disY2+disZ2*disZ2);
-            //                    testmarkIds.push_back(idL);
-            //                    testmarkCorners.push_back(cornerL);
-            ////                    std::cout<<distance20<<", ";
-            ////                    std::cout<<distance21<<", ";
-            //                    testmarkCorners.push_back(TagL.at(countofTag).at(i).markCorners);
-            //                    testmarkIds.push_back(TagL.at(countofTag).at(i).markId);
-            //                    double distance=sqrt((disX2-disX1)*(disX2-disX1)+(disY2-disY1)*(disY2-disY1)+(disZ1-disZ2)*(disZ1-disZ2));
-            ////                    std::cout<<distance<<std::endl;
-
-            //                }
-            //                cv::aruco::drawDetectedMarkers(FramefromCameraL,testmarkCorners,testmarkIds);
-
-            //            }
-
-
+            //draw the axis and detected ArucoTag
+            testmarkCorners.push_back(output.at(object["objectId"].as<int>()).outputObject.objectTag.markCorners);
+            testmarkIds.push_back(output.at(object["objectId"].as<int>()).outputObject.objectTag.markId);
 
         }
-
-
 
     }
     cv::aruco::drawDetectedMarkers(FramefromCameraL,testmarkCorners,testmarkIds);
@@ -499,6 +434,6 @@ void arucoPose::outputArucoPosture(){
         //                            cv::aruco::drawDetectedMarkers(FramefromCameraL,TagL.at(countofTag).at(j).markCorners,TagL.at(countofTag).at(j).markId);
         cv::aruco::drawAxis(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,rotationDraw[i],tevsDraw[i],0.05);
     }
-//        cv::namedWindow("testFrame", 1);
-//        imshow("testFrame", FramefromCameraL);
+    //        cv::namedWindow("testFrame", 1);
+    //        imshow("testFrame", FramefromCameraL);
 }

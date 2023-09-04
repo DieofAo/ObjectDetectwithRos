@@ -7,9 +7,18 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   roscpp
+  rospy
   std_msgs
+  message_generation
 )
 
+add_message_files(
+    FILES
+    objectPose.msg)
+
+generate_messages(
+    DEPENDENCIES
+    std_msgs)
 
 set(OpenCV_DIR "/home/jqzlca/software/opencv_install/lib/cmake/opencv4")
 find_package(OpenCV REQUIRED)
@@ -36,8 +45,11 @@ set(src
 catkin_package(     #此命令指定了生成的可执行性程序路径，到/dev/lib
   CATKIN_DEPENDS
   roscpp
+  rospy
   std_msgs
- )
+  message_runtime)
+
+
 
 add_executable(${PROJECT_NAME}_node ${src})
 

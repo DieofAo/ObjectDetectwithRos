@@ -6,9 +6,7 @@
 #include <camera_info_manager/camera_info_manager.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <string>
-
-
-
+#include "object_detector/objectPose.h"
 
 
 class objectDetectorOnRos{
@@ -19,6 +17,10 @@ public:
     ros::NodeHandle _nh;
     image_transport::ImageTransport _it;
     image_transport::Publisher *pubLRaw,*pubRRaw,*pubResult;
+    ros::Publisher *objectPosture;
+    object_detector::objectPose *msg;
+    std::vector<struct msgPose> outputObjectInformation;
+
     std::string config_Yaml;
 
     cv::Mat originalLeftFrame,originalRightFrame,ArucoDetectedLeftFrame;

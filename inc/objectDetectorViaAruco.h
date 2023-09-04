@@ -37,6 +37,7 @@ struct objectPose{
     unsigned int objectMarkId;
     Eigen::Isometry3d objectPosture;
     Eigen::Isometry3d tranformationFromTag2Object;
+    Eigen::Quaterniond outputObjectPose;
 };
 
 struct object{
@@ -47,12 +48,18 @@ struct object{
     Eigen::Isometry3d posture;
 };
 
+struct msgPose{
+    struct objectPose pose;
+    unsigned int objectId;
+};
+
 class arucoPose{
 public:
     cv::Mat FramefromCameraL,FramefromCameraR;
     cv::Mat *resultFrame;
+    std::vector<struct msgPose> _outputObjectInformation;
 
-    arucoPose(std::string& configYaml);
+    arucoPose(std::string& configYaml,std::vector<struct msgPose>& outputObjectInformation);
     ~arucoPose();
 //    void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR,cv::Mat& result);
     void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR);
@@ -63,7 +70,7 @@ private:
     std::vector<object> output;
     unsigned int countofTag=0;
     cv::Mat intrinsic_matrixL,distortion_matrixL,intrinsic_matrixR,distortion_matrixR,transMatrixFromR2L;
-        cv::Mat projMatrixL,projMatrixR;
+    cv::Mat projMatrixL,projMatrixR;
 
     YAML::Node ObjectForDetecting;
     unsigned int objectNum;

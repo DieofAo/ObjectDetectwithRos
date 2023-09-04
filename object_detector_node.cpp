@@ -10,7 +10,7 @@ int main(int argc, char** argv){
     nh.getParam("gloabalCameraId",globalCameraId);
     nh.getParam("handCameraId",handCameraId);
 
-//    objectDetectorOnRos global_detector(nh,globalCameraId),hand_detector(nh,handCameraId);
+//    objectDetectorOnRos hand_detector(nh,handCameraId);
     objectDetectorOnRos global_detector(nh,globalCameraId);
 
     ros::Rate looprate(30);

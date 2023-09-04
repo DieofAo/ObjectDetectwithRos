@@ -1,5 +1,8 @@
-unsigned int objectId;
-objectPose outputObject;
-float shape_size_obj[3];
-float shape_type_obj[3];  #sphere, cylinder,cuboid
-Eigen::Isometry3d posture;
+float64 x
+float64 y
+float64 z
+float64 w
+float64 t1
+float64 t2
+float64 t3
+int32 id
