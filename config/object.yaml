@@ -6,11 +6,21 @@ distortionMatrix:
 objectNum: 2
 object1:
  objectId: 0
- objectmarkId: 20
- shape_type: 0
- shape_size: [34,245,0]
+ numofmark: 4
+ objectmarkId0: 20
+ objectmarkId1: 21
+ objectmarkId2: 22
+ objectmarkId3: 23
+ shape_type: 2
+ shape_size: [42,42,42]
 object2:
  objectId: 1
- objectmarkId: 21
+ numofmark: 6
+ objectmarkId0: 24
+ objectmarkId1: 25
+ objectmarkId2: 26
+ objectmarkId3: 27
+ objectmarkId4: 28
+ objectmarkId5: 29
  shape_type: 0 
  shape_size: [34,245,0]     

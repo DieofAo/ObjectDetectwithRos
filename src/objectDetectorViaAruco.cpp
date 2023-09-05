@@ -390,10 +390,17 @@ void arucoPose::outputArucoPosture(){
 
 
             YAML::Node object;
-            if(TagL.at(countofTag).at(j).markId==ObjectForDetecting["object1"]["objectmarkId"].as<unsigned int>())
-                object=ObjectForDetecting["object1"];
-            else if(TagL.at(countofTag).at(j).markId==ObjectForDetecting["object2"]["objectmarkId"].as<unsigned int>())
-                object=ObjectForDetecting["object2"];
+            for(int jj=0;jj<ObjectForDetecting["objectNum"].as<int>();jj++){
+                std::string objectForYaml="object"+std::to_string(jj+1);
+                for(int i=0;i<ObjectForDetecting[objectForYaml]["numofmark"].as<int>();i++){
+                    std::string objectmarkIdForYaml="objectmarkId"+std::to_string(i);
+                    if(TagL.at(countofTag).at(j).markId==ObjectForDetecting[objectForYaml][objectmarkIdForYaml].as<unsigned int>()){
+                        object=ObjectForDetecting[objectForYaml];
+                        jj=ObjectForDetecting["objectNum"].as<int>();//just for exit the first circulation
+                        break;
+                    }
+                }
+            }
             output.at(object["objectId"].as<int>()).objectId=object["objectId"].as<int>();
             output.at(object["objectId"].as<int>()).outputObject.objectMarkId=TagL.at(countofTag).at(j).markId;
             output.at(object["objectId"].as<int>()).outputObject.objectTag=TagL.at(countofTag).at(j);
@@ -411,6 +418,13 @@ void arucoPose::outputArucoPosture(){
                     output.at(object["objectId"].as<int>()).shape_size_obj[i]=it->as<float>();
                     it++;
                 }
+
+                Eigen::Isometry3d transferArucotagToObject;
+                transferArucotagToObject.setIdentity();
+                Eigen::Vector3d linear;
+                linear<<output.at(-object["objectId"].as<int>()).shape_size_obj[0]/2.0,0,0;
+                transferArucotagToObject.translation()=linear;
+                output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.objectPosture*transferArucotagToObject;
             }
 
 
