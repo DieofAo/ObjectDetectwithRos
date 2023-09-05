@@ -5,4 +5,5 @@ float64 w
 float64 t1
 float64 t2
 float64 t3
-int32 id
+int32 objectId
+int32 cameraId

@@ -47,7 +47,7 @@ void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
 
     std_msgs::Header header;
     header.frame_id = ros::names::resolve(ros::this_node::getNamespace() ,"global") + "/camera_link";
-//    ros::Rate rate(10);
+    ros::Rate rate(10);
     //capture the image and publish it
     if (_nh.ok()) {
         ros::Time time = ros::Time::now();
@@ -56,7 +56,6 @@ void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
         msgLRaw = cv_bridge::CvImage(header, "bgr8", imageLRaw).toImageMsg();
         msgRRaw = cv_bridge::CvImage(header, "bgr8", imageRRaw).toImageMsg();
         msgResult = cv_bridge::CvImage(header, "bgr8", imageResult).toImageMsg();
-
         //config object pose for msg
         if(outputObjectInformation.size()){
             for(size_t i=0;i<outputObjectInformation.size();i++){
@@ -67,9 +66,11 @@ void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
                 msg->y=outputObjectInformation.at(i).pose.outputObjectPose.y();
                 msg->z=outputObjectInformation.at(i).pose.outputObjectPose.z();
                 msg->w=outputObjectInformation.at(i).pose.outputObjectPose.w();
-                msg->id=outputObjectInformation.at(i).objectId;
+                msg->objectId=outputObjectInformation.at(i).objectId;
+                msg->cameraId=cameraId;
+
                 objectPosture->publish(*msg);
-                ROS_INFO("msg:",msg->id);
+
             }
         }
 
@@ -77,7 +78,7 @@ void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
         pubRRaw->publish(msgRRaw);
         if(!ArucoDetectedLeftFrame.empty())
             pubResult->publish(msgResult);
-//        rate.sleep();
+        rate.sleep();
 
     }
 }

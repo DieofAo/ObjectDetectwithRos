@@ -32,10 +32,9 @@ arucoPose::arucoPose(std::string& configYaml,std::vector<struct msgPose>& output
 
     ObjectForDetecting=YAML::LoadFile(configYaml);
 
-    objectNum=ObjectForDetecting["objectNum"].as<unsigned int>();
-    output.resize(objectNum);
+    output.resize(ObjectForDetecting["objectNum"].as<unsigned int>());
 
-    _outputObjectInformation=outputObjectInformation;
+    _outputObjectInformation=&outputObjectInformation;
 
 }
 
@@ -365,8 +364,8 @@ void arucoPose::outputArucoPosture(){
     std::vector<cv::Vec3d> rotationDraw,tevsDraw;
 
     output.clear();
-    _outputObjectInformation.clear();
-    output.resize(objectNum);
+    _outputObjectInformation->clear();
+    output.resize(ObjectForDetecting["objectNum"].as<unsigned int>());
 
     //    int num2=0;
 
@@ -422,7 +421,7 @@ void arucoPose::outputArucoPosture(){
                 Eigen::Isometry3d transferArucotagToObject;
                 transferArucotagToObject.setIdentity();
                 Eigen::Vector3d linear;
-                linear<<output.at(-object["objectId"].as<int>()).shape_size_obj[0]/2.0,0,0;
+                linear<<output.at(object["objectId"].as<int>()).shape_size_obj[0]/2.0,0,0;
                 transferArucotagToObject.translation()=linear;
                 output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.objectPosture*transferArucotagToObject;
             }
@@ -432,8 +431,9 @@ void arucoPose::outputArucoPosture(){
             output.at(object["objectId"].as<int>()).outputObject.outputObjectPose=Eigen::Quaterniond(ArucoTagPostureInCameraLeft.rotation());
             struct msgPose objectForMsg;
             objectForMsg.pose.outputObjectPose=output.at(object["objectId"].as<int>()).outputObject.outputObjectPose;
+            objectForMsg.pose.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object;
             objectForMsg.objectId=object["objectId"].as<int>();
-            _outputObjectInformation.push_back(objectForMsg);
+            _outputObjectInformation->push_back(objectForMsg);
 
             //draw the axis and detected ArucoTag
             testmarkCorners.push_back(output.at(object["objectId"].as<int>()).outputObject.objectTag.markCorners);
@@ -448,6 +448,6 @@ void arucoPose::outputArucoPosture(){
         //                            cv::aruco::drawDetectedMarkers(FramefromCameraL,TagL.at(countofTag).at(j).markCorners,TagL.at(countofTag).at(j).markId);
         cv::aruco::drawAxis(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,rotationDraw[i],tevsDraw[i],0.05);
     }
-    //        cv::namedWindow("testFrame", 1);
-    //        imshow("testFrame", FramefromCameraL);
+//            cv::namedWindow("testFrame", 1);
+//            imshow("testFrame", FramefromCameraL);
 }

@@ -51,17 +51,17 @@ struct object{
 struct msgPose{
     struct objectPose pose;
     unsigned int objectId;
+    int cameraId;
 };
 
 class arucoPose{
 public:
     cv::Mat FramefromCameraL,FramefromCameraR;
     cv::Mat *resultFrame;
-    std::vector<struct msgPose> _outputObjectInformation;
+    std::vector<struct msgPose> *_outputObjectInformation;
 
     arucoPose(std::string& configYaml,std::vector<struct msgPose>& outputObjectInformation);
     ~arucoPose();
-//    void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR,cv::Mat& result);
     void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR);
 
 private:
@@ -73,7 +73,6 @@ private:
     cv::Mat projMatrixL,projMatrixR;
 
     YAML::Node ObjectForDetecting;
-    unsigned int objectNum;
 
 
 
