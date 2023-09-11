@@ -1,8 +1,6 @@
 #object shape_type 1->cylinder，2->cuboid，3->sphere5
-handCameraId: 1
+handCameraId: 4
 globalCameraId: 0
-intrinsicMatrix: 
-distortionMatrix: 
 objectNum: 2
 object1:
  objectId: 0
@@ -22,5 +20,5 @@ object2:
  objectmarkId3: 27
  objectmarkId4: 28
  objectmarkId5: 29
- shape_type: 0 
- shape_size: [34,245,0]     
+ shape_type: 2 
+ shape_size: [352,352,50]     

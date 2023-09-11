@@ -16,7 +16,8 @@ public:
     camera *steroCamera;
     ros::NodeHandle _nh;
     image_transport::ImageTransport _it;
-    image_transport::Publisher *pubLRaw,*pubRRaw,*pubResult;
+    image_transport::Publisher *pubGlobalLRaw,*pubGlobalRRaw,*pubGlobalResult;
+    image_transport::Publisher *pubHandLRaw,*pubHandRRaw,*pubHandResult;
     ros::Publisher *objectPosture;
     object_detector::objectPose *msg;
     std::vector<struct msgPose> outputObjectInformation;
@@ -28,6 +29,6 @@ public:
 
     objectDetectorOnRos(ros::NodeHandle& nh,int Id);
     ~objectDetectorOnRos();
-    void run();
-    void rosImageView(cv::Mat& imageLRaw,cv::Mat& imageRRaw,cv::Mat& imageResult);
+    void run(int cameraId);
+    void rosImageView(cv::Mat& imageLRaw,cv::Mat& imageRRaw,cv::Mat& imageResult,int cameraID);
 };

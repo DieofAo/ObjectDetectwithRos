@@ -1,0 +1,10 @@
+intrinsicMatrixL: 
+ first: [921.6992,0,653.3826]
+ second: [0,918.4418,364.1299]
+ third: [0,0,1]
+distortionMatrixL: [0.0128,-0.0343,0.0023,-0.00011,0]
+intrinsicMatrixR: 
+ first: [920.5909,0,646.5033]
+ second: [0,917.4791,370.2785]
+ third: [0,0,1]
+distortionMatrixR: [0.0135,-0.0339,0.0032,-0.00011,0]

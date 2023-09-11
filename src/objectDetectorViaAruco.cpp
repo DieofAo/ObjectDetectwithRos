@@ -6,23 +6,19 @@ arucoPose::~arucoPose(){
 }
 
 arucoPose::arucoPose(std::string& configYaml,std::vector<struct msgPose>& outputObjectInformation){
-    distortion_matrixL=(cv::Mat_<double>(5,1)<<0.0128,-0.0343,0.0023,-0.00011,0);
-    intrinsic_matrixL=(cv::Mat_<double>(3,3)<<921.6992,0,653.3826,
-                         0,918.4418,364.1299,
-                         0,0,1);
-    distortion_matrixR=(cv::Mat_<double>(5,1)<<0.0135,-0.0339,0.0032,-0.00011,0);
-    intrinsic_matrixR=(cv::Mat_<double>(3,3)<<920.5909,0,646.5033,
-                         0,917.4791,370.2785,
-                         0,0,1);
+//    distortion_matrixL=(cv::Mat_<double>(5,1)<<0.0128,-0.0343,0.0023,-0.00011,0);
+//    intrinsic_matrixL=(cv::Mat_<double>(3,3)<<921.6992,0,653.3826,
+//                         0,918.4418,364.1299,
+//                         0,0,1);
+//    distortion_matrixR=(cv::Mat_<double>(5,1)<<0.0135,-0.0339,0.0032,-0.00011,0);
+//    intrinsic_matrixR=(cv::Mat_<double>(3,3)<<920.5909,0,646.5033,
+//                         0,917.4791,370.2785,
+//                         0,0,1);
     transMatrixFromR2L=(cv::Mat_<double>(4,4)<<1.0,0.0023,1.4284e-4,-65.2972,
                           -0.0023,1.0,-0.0066,0.0304,
                           1.5806e-4,0.0066,1.0,-0.1852,
                           0,0,0,1);
-    projMatrixL=cv::Mat::zeros(3,4,CV_64F);
-    projMatrixR=cv::Mat::zeros(3,4,CV_64F);
-    intrinsic_matrixL.copyTo(projMatrixL(cv::Rect(0,0,3,3)));//transfer 3*3 intrinsMatrix to 3*4 form
-    intrinsic_matrixR.copyTo(projMatrixR(cv::Rect(0,0,3,3)));
-    projMatrixR=projMatrixR*transMatrixFromR2L;//changable
+
 
 
     TagL.resize(NumFrameForMean,std::vector<Tag>(ArucoTagCount));
@@ -37,9 +33,110 @@ arucoPose::arucoPose(std::string& configYaml,std::vector<struct msgPose>& output
     _outputObjectInformation=&outputObjectInformation;
 
 }
+void arucoPose::configCameraInformation(int cameraId){
+    YAML::Node configCamera;
+    if(cameraId==ObjectForDetecting["handCameraId"].as<int>())
+        configCamera=YAML::LoadFile("/home/jqzlca/workspace/catkin_ws/src/jqz_ws/object_detector/config/HandCamera.yaml");
+    if(cameraId==ObjectForDetecting["globalCameraId"].as<int>())
+        configCamera=YAML::LoadFile("/home/jqzlca/workspace/catkin_ws/src/jqz_ws/object_detector/config/GlobalCamera.yaml");
+    const YAML::Node& sizeNodeL=configCamera["distortionMatrixL"];
+    float sizeL[5];
+    if(sizeNodeL.IsSequence()){
+        YAML::const_iterator it=sizeNodeL.begin();
+        for(unsigned int i=0;i<sizeNodeL.size();i++){
+            sizeL[i]=it->as<float>();
+            it++;
+        }
+    }
+    distortion_matrixL=(cv::Mat_<double>(5,1)<<sizeL[0],sizeL[1],sizeL[2],sizeL[3],sizeL[4]);
 
+    const YAML::Node& sizeNodeR=configCamera["distortionMatrixR"];
+    float sizeR[5];
+    if(sizeNodeR.IsSequence()){
+        YAML::const_iterator it=sizeNodeR.begin();
+        for(unsigned int i=0;i<sizeNodeR.size();i++){
+            sizeR[i]=it->as<float>();
+            it++;
+        }
+    }
+    distortion_matrixR=(cv::Mat_<double>(5,1)<<sizeR[0],sizeR[1],sizeR[2],sizeR[3],sizeR[4]);
+
+    float intrinRMatrix[3][3];
+    YAML::Node intrinR=configCamera["intrinsicMatrixR"]["first"];
+    const YAML::Node& intrinRFirst=intrinR;
+    if(intrinRFirst.IsSequence()){
+        YAML::const_iterator it=intrinRFirst.begin();
+        for(unsigned int i=0;i<intrinRFirst.size();i++){
+            intrinRMatrix[0][i]=it->as<float>();
+            it++;
+        }
+    }
+    intrinR=configCamera["intrinsicMatrixR"]["second"];
+    const YAML::Node& intrinRSecond=intrinR;
+    if(intrinRSecond.IsSequence()){
+        YAML::const_iterator it=intrinRSecond.begin();
+        for(unsigned int i=0;i<intrinRSecond.size();i++){
+            intrinRMatrix[1][i]=it->as<float>();
+            it++;
+        }
+    }
+    intrinR=configCamera["intrinsicMatrixR"]["third"];
+    const YAML::Node& intrinRThird=intrinR;
+    if(intrinRThird.IsSequence()){
+        YAML::const_iterator it=intrinRThird.begin();
+        for(unsigned int i=0;i<intrinRThird.size();i++){
+            intrinRMatrix[2][i]=it->as<float>();
+            it++;
+        }
+    }
+    intrinsic_matrixR=(cv::Mat_<double>(3,3)<<intrinRMatrix[0][0],intrinRMatrix[0][1],intrinRMatrix[0][2],
+                         intrinRMatrix[1][0],intrinRMatrix[1][1],intrinRMatrix[1][2],
+                         intrinRMatrix[2][0],intrinRMatrix[2][1],intrinRMatrix[2][2]);
+
+    float intrinLMatrix[3][3];
+    YAML::Node intrinL=configCamera["intrinsicMatrixL"]["first"];
+    const YAML::Node& intrinLFirst=intrinL;
+    if(intrinLFirst.IsSequence()){
+        YAML::const_iterator it=intrinLFirst.begin();
+        for(unsigned int i=0;i<intrinLFirst.size();i++){
+            intrinLMatrix[0][i]=it->as<float>();
+            it++;
+        }
+    }
+    intrinL=configCamera["intrinsicMatrixL"]["second"];
+    const YAML::Node& intrinLSecond=intrinL;
+    if(intrinLSecond.IsSequence()){
+        YAML::const_iterator it=intrinLSecond.begin();
+        for(unsigned int i=0;i<intrinLSecond.size();i++){
+            intrinLMatrix[1][i]=it->as<float>();
+            it++;
+        }
+    }
+    intrinL=configCamera["intrinsicMatrixL"]["third"];
+    const YAML::Node& intrinLThird=intrinL;
+    if(intrinLThird.IsSequence()){
+        YAML::const_iterator it=intrinLThird.begin();
+        for(unsigned int i=0;i<intrinLThird.size();i++){
+            intrinLMatrix[2][i]=it->as<float>();
+            it++;
+        }
+    }
+    intrinsic_matrixL=(cv::Mat_<double>(3,3)<<intrinLMatrix[0][0],intrinLMatrix[0][1],intrinLMatrix[0][2],
+                         intrinLMatrix[1][0],intrinLMatrix[1][1],intrinLMatrix[1][2],
+                         intrinLMatrix[2][0],intrinLMatrix[2][1],intrinLMatrix[2][2]);
+
+
+    projMatrixL=cv::Mat::zeros(3,4,CV_64F);
+    projMatrixR=cv::Mat::zeros(3,4,CV_64F);
+    intrinsic_matrixL.copyTo(projMatrixL(cv::Rect(0,0,3,3)));//transfer 3*3 intrinsMatrix to 3*4 form
+    intrinsic_matrixR.copyTo(projMatrixR(cv::Rect(0,0,3,3)));
+    projMatrixR=projMatrixR*transMatrixFromR2L;//changable
+
+}
 void arucoPose::runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,
-                                                   cv::Mat& FrameDetectR){
+                                                   cv::Mat& FrameDetectR,
+                                                   int cameraId){
+    configCameraInformation(cameraId);
     FramefromCameraL=FrameDetectL.clone();
     FramefromCameraR=FrameDetectR.clone();
     std::thread left=std::thread([&](){
@@ -448,6 +545,6 @@ void arucoPose::outputArucoPosture(){
         //                            cv::aruco::drawDetectedMarkers(FramefromCameraL,TagL.at(countofTag).at(j).markCorners,TagL.at(countofTag).at(j).markId);
         cv::aruco::drawAxis(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,rotationDraw[i],tevsDraw[i],0.05);
     }
-//            cv::namedWindow("testFrame", 1);
-//            imshow("testFrame", FramefromCameraL);
+//                cv::namedWindow("testFrame", 1);
+//                imshow("testFrame", FramefromCameraL);
 }

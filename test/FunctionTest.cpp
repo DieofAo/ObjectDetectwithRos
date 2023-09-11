@@ -11,12 +11,13 @@ int main(){
 std::string path="/home/jqzlca/workspace/catkin_ws/src/jqz_ws/object_detector/config/object.yaml";
 std::vector<struct msgPose> outputObjectInformation;
     arucoPose PositionDetect(path,outputObjectInformation);
-    camera steroCamera(0);
+    camera steroCamera(4);
 
     while (1) {
 //        std::thread global=std::thread([&](){
+        PositionDetect.configCameraInformation(4);
             steroCamera.imageRetrive(leftFrame,rightFrame);
-            PositionDetect.runDetectArucoTagPosByStereoCamera(leftFrame,rightFrame);
+            PositionDetect.runDetectArucoTagPosByStereoCamera(leftFrame,rightFrame,0);
 
 //        });
         //        std::thread hand=std::thread([&](){

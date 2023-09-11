@@ -2,7 +2,7 @@
   <arg name="detect_node_name" default="object_detector_node"/>
   <arg name="config_Yaml" default="$(find object_detector)/config/object.yaml"/>
   <arg name="gloabalCameraId" default="0"/>
-  <arg name="handCameraId" default="1"/>
+  <arg name="handCameraId" default="4"/>
   
   <node pkg="object_detector" type="object_detector_node" name="$(arg detect_node_name)" output="screen" >
     <param name="config_Yaml" type="str" value="$(arg config_Yaml)"/>
@@ -10,8 +10,11 @@
     <param name="handCameraId" type="int" value="$(arg handCameraId)"/>
   </node>
   
-  <node pkg="rqt_image_view" type="rqt_image_view" name="imageL" output="screen" />
-  <node pkg="rqt_image_view" type="rqt_image_view" name="imageR" output="screen" />
-  <node pkg="rqt_image_view" type="rqt_image_view" name="imageResult" output="screen" />
+  <node pkg="rqt_image_view" type="rqt_image_view" name="GlobalimageL" output="screen" />
+  <node pkg="rqt_image_view" type="rqt_image_view" name="GlobalimageR" output="screen" />
+  <node pkg="rqt_image_view" type="rqt_image_view" name="GlobalimageResult" output="screen" />
+  <node pkg="rqt_image_view" type="rqt_image_view" name="HandimageL" output="screen" />
+  <node pkg="rqt_image_view" type="rqt_image_view" name="HandimageR" output="screen" />
+  <node pkg="rqt_image_view" type="rqt_image_view" name="HandimageResult" output="screen" />
 
 </launch>

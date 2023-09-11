@@ -12,37 +12,35 @@ objectDetectorOnRos::objectDetectorOnRos(ros::NodeHandle& nh,int Id):_nh(),_it(_
     PositionDetect=new arucoPose(config_Yaml,outputObjectInformation);
     steroCamera=new camera(cameraId);
 
-    pubLRaw=new image_transport::Publisher(_it.advertise("LRaw", 5));
-    pubRRaw=new image_transport::Publisher(_it.advertise("RRaw", 5));
-    pubResult=new image_transport::Publisher(_it.advertise("Result", 5));
+    pubGlobalLRaw=new image_transport::Publisher(_it.advertise("GlobalLRaw", 5));
+    pubGlobalRRaw=new image_transport::Publisher(_it.advertise("GlobalRRaw", 5));
+    pubGlobalResult=new image_transport::Publisher(_it.advertise("GlobalResult", 5));
+    pubHandLRaw=new image_transport::Publisher(_it.advertise("HandLRaw", 5));
+    pubHandRRaw=new image_transport::Publisher(_it.advertise("HandRRaw", 5));
+    pubHandResult=new image_transport::Publisher(_it.advertise("HandResult", 5));
     objectPosture=new ros::Publisher(_nh.advertise<object_detector::objectPose>("object_info",10));
     msg=new object_detector::objectPose;
 
-    //    outputObjectInformation=new struct object;
-//    outputObjectInformation=(struct object*) malloc(sizeof(struct object));
-
-//        objectPosture=new ros::Publisher;
-//        *objectPosture=_nh.advertise<object_detector::objectPose>("/object_info",10);
-
-
 }
-void objectDetectorOnRos::run(){
+
+void objectDetectorOnRos::run(int cameraId){
     cv::Mat leftFrame,rightFrame;
 
 
     steroCamera->imageRetrive(leftFrame,rightFrame);
 
-    PositionDetect->runDetectArucoTagPosByStereoCamera(leftFrame,rightFrame);
+    PositionDetect->runDetectArucoTagPosByStereoCamera(leftFrame,rightFrame,cameraId);
 
     ArucoDetectedLeftFrame=PositionDetect->FramefromCameraL;
-    rosImageView(leftFrame,rightFrame,ArucoDetectedLeftFrame);
+    rosImageView(leftFrame,rightFrame,ArucoDetectedLeftFrame,cameraId);
 
 }
 
 
 void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
                                        cv::Mat& imageRRaw,
-                                       cv::Mat& imageResult){
+                                       cv::Mat& imageResult,
+                                       int cameraId){
     sensor_msgs::ImagePtr msgLRaw,msgRRaw,msgResult;
 
     std_msgs::Header header;
@@ -73,11 +71,19 @@ void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
 
             }
         }
+        if(cameraId==0){
+            pubGlobalLRaw->publish(msgLRaw);
+            pubGlobalRRaw->publish(msgRRaw);
+            if(!ArucoDetectedLeftFrame.empty())
+                pubGlobalResult->publish(msgResult);
+        }
+        if(cameraId==4){
+            pubHandLRaw->publish(msgLRaw);
+            pubHandRRaw->publish(msgRRaw);
+            if(!ArucoDetectedLeftFrame.empty())
+                pubHandResult->publish(msgResult);
+        }
 
-        pubLRaw->publish(msgLRaw);
-        pubRRaw->publish(msgRRaw);
-        if(!ArucoDetectedLeftFrame.empty())
-            pubResult->publish(msgResult);
         rate.sleep();
 
     }

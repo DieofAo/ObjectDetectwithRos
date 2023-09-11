@@ -62,8 +62,8 @@ public:
 
     arucoPose(std::string& configYaml,std::vector<struct msgPose>& outputObjectInformation);
     ~arucoPose();
-    void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR);
-
+    void runDetectArucoTagPosByStereoCamera(cv::Mat& FrameDetectL,cv::Mat& FrameDetectR,int cameraId);
+void configCameraInformation(int cameraId);
 private:
     std::vector<std::vector<Tag>> TagL,TagR;
     std::vector<std::vector<Tag*>> DimensionBasedMarkIdTagL,DimensionBasedMarkIdTagR;
