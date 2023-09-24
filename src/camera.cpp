@@ -2,8 +2,8 @@
 
 camera::camera(int id){
     cap.open(id,cv::CAP_ANY);
-      cap.set(cv::CAP_PROP_FRAME_WIDTH,  2560);
-      cap.set(cv::CAP_PROP_FRAME_HEIGHT, 960);
+      cap.set(cv::CAP_PROP_FRAME_WIDTH,  Image_Width*2);
+      cap.set(cv::CAP_PROP_FRAME_HEIGHT, Image_height);
       cap.set(cv::CAP_PROP_FPS, 30);
       cap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
 }

@@ -10,11 +10,8 @@
     <param name="handCameraId" type="int" value="$(arg handCameraId)"/>
   </node>
   
-  <node pkg="rqt_image_view" type="rqt_image_view" name="GlobalimageL" output="screen" />
-  <node pkg="rqt_image_view" type="rqt_image_view" name="GlobalimageR" output="screen" />
+  
   <node pkg="rqt_image_view" type="rqt_image_view" name="GlobalimageResult" output="screen" />
-  <node pkg="rqt_image_view" type="rqt_image_view" name="HandimageL" output="screen" />
-  <node pkg="rqt_image_view" type="rqt_image_view" name="HandimageR" output="screen" />
   <node pkg="rqt_image_view" type="rqt_image_view" name="HandimageResult" output="screen" />
 
 </launch>
