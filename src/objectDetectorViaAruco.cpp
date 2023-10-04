@@ -558,7 +558,45 @@ void arucoPose::outputArucoPosture(){
                 transferArucotagToObject.translation()=linear;
                 output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.objectPosture*transferArucotagToObject;
             }
+//            std::cout<<"1:"<<Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation()).x()<<","<<
+//                Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation()).y()<<","<<
+//                Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation()).z()<<","<<
+//                Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation()).w()<<std::endl;
 
+            //Unify to the same code Cooridante by rotation
+            int i=TagL.at(countofTag).at(j).markId-object["objectmarkId0"].as<int>();
+            Eigen::Isometry3d rotation2leastMarkPose;
+            rotation2leastMarkPose.setIdentity();
+
+            if(i){
+
+                Eigen::AngleAxisd rotation_vectoryY;
+                if(object["objectId"].as<int>()==0)
+                rotation_vectoryY=Eigen::AngleAxisd(-M_PI*i/2,Eigen::Vector3d(0,1,0));
+                if(object["objectId"].as<int>()==1)
+                rotation_vectoryY=Eigen::AngleAxisd(-M_PI*i/3,Eigen::Vector3d(0,1,0));
+//                std::cout<<i<<std::endl;
+                Eigen::Matrix3d rotation_vectorYMatrix=rotation_vectoryY.matrix();
+                rotation2leastMarkPose.rotate(rotation_vectorYMatrix);
+//                std::cout<<"0"<<(Eigen::Quaterniond(rotation_vectorYMatrix)).x()<<std::endl;
+//                output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2leastMarkPose;
+            }
+
+            //rotate cooridantion from Tag detected result frame to object pose in plan frame
+            Eigen::Isometry3d rotation2MarkPoseInPlanSence;
+            rotation2MarkPoseInPlanSence.setIdentity();
+            Eigen::AngleAxisd rotation_vectoryX(-M_PI/2,Eigen::Vector3d(1,0,0));
+            Eigen::Matrix3d rotation_vectorXMatrix=rotation_vectoryX.matrix();
+            rotation2MarkPoseInPlanSence.rotate(rotation_vectorXMatrix);
+
+
+            Eigen::Isometry3d rotation2MarkPoseXYZNormal;
+            rotation2MarkPoseXYZNormal.setIdentity();
+            Eigen::AngleAxisd rotation_vectoryZ(-M_PI/2,Eigen::Vector3d(0,0,1));
+            Eigen::Matrix3d rotation_vectorXYZMatrix=rotation_vectoryZ.matrix();
+            rotation2MarkPoseXYZNormal.rotate(rotation_vectorXYZMatrix);
+//            output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2MarkPoseXYZNormal*rotation2MarkPoseInPlanSence*rotation2leastMarkPose;
+            output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2leastMarkPose*rotation2MarkPoseInPlanSence*rotation2MarkPoseXYZNormal;
 
             //Unify to the same code Cooridante by rotation
             int i=TagL.at(countofTag).at(j).markId-object["objectmarkId0"].as<int>();
@@ -598,7 +636,12 @@ void arucoPose::outputArucoPosture(){
             output.at(object["objectId"].as<int>()).outputObject.outputObjectPose=Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation());
             struct msgPose objectForMsg;
             objectForMsg.pose.outputObjectPose=output.at(object["objectId"].as<int>()).outputObject.outputObjectPose;
+<<<<<<< HEAD
 
+=======
+//            std::cout<<"1"<<output.at(object["objectId"].as<int>()).outputObject.outputObjectPose.x()<<std::endl;
+//            std::cout<<"2"<<objectForMsg.pose.outputObjectPose.x()<<std::endl;
+>>>>>>> ac31f4b697487a2d0be244eb40c62f504450195c
 
             output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().x()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().x()/1000.0;
             output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().y()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().y()/1000.0;
