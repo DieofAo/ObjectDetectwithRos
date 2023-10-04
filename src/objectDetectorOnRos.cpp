@@ -1,5 +1,15 @@
 #include"objectDetectorOnRos.h"
 objectDetectorOnRos::~objectDetectorOnRos(){
+    delete PositionDetect;
+    delete steroCamera;
+    delete pubGlobalLRaw;
+    delete pubGlobalRRaw;
+    delete pubGlobalResult;
+    delete pubHandLRaw;
+    delete pubHandRRaw;
+    delete pubHandResult;
+    delete objectPosture;
+    delete msg;
 
 }
 
@@ -57,9 +67,9 @@ void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
         //config object pose for msg
         if(outputObjectInformation.size()){
             for(size_t i=0;i<outputObjectInformation.size();i++){
-                msg->t1=outputObjectInformation.at(i).pose.tranformationFromTag2Object.translation().x();
-                msg->t2=outputObjectInformation.at(i).pose.tranformationFromTag2Object.translation().y();
-                msg->t3=outputObjectInformation.at(i).pose.tranformationFromTag2Object.translation().z();
+                msg->t_x=outputObjectInformation.at(i).pose.tranformationFromTag2Object.translation().x();
+                msg->t_y=outputObjectInformation.at(i).pose.tranformationFromTag2Object.translation().y();
+                msg->t_z=outputObjectInformation.at(i).pose.tranformationFromTag2Object.translation().z();
                 msg->x=outputObjectInformation.at(i).pose.outputObjectPose.x();
                 msg->y=outputObjectInformation.at(i).pose.outputObjectPose.y();
                 msg->z=outputObjectInformation.at(i).pose.outputObjectPose.z();

@@ -14,10 +14,10 @@ arucoPose::arucoPose(std::string& configYaml,std::vector<struct msgPose>& output
 //    intrinsic_matrixR=(cv::Mat_<double>(3,3)<<920.5909,0,646.5033,
 //                         0,917.4791,370.2785,
 //                         0,0,1);
-    transMatrixFromR2L=(cv::Mat_<double>(4,4)<<1.0,0.0023,1.4284e-4,-65.2972,
-                          -0.0023,1.0,-0.0066,0.0304,
-                          1.5806e-4,0.0066,1.0,-0.1852,
-                          0,0,0,1);
+//    transMatrixFromR2L=(cv::Mat_<double>(4,4)<<1.0,0.0023,1.4284e-4,-65.2972,
+//                          -0.0023,1.0,-0.0066,0.0304,
+//                          1.5806e-4,0.0066,1.0,-0.1852,
+//                          0,0,0,1);
 
 
 
@@ -124,6 +124,40 @@ void arucoPose::configCameraInformation(int cameraId){
     intrinsic_matrixL=(cv::Mat_<double>(3,3)<<intrinLMatrix[0][0],intrinLMatrix[0][1],intrinLMatrix[0][2],
                          intrinLMatrix[1][0],intrinLMatrix[1][1],intrinLMatrix[1][2],
                          intrinLMatrix[2][0],intrinLMatrix[2][1],intrinLMatrix[2][2]);
+
+    float transMatrix[3][4];
+    YAML::Node Trans=configCamera["transMatrix"]["first"];
+    const YAML::Node& TransFirst=Trans;
+    if(TransFirst.IsSequence()){
+        YAML::const_iterator it=TransFirst.begin();
+        for(unsigned int i=0;i<TransFirst.size();i++){
+            transMatrix[0][i]=it->as<float>();
+            it++;
+        }
+    }
+    Trans=configCamera["transMatrix"]["second"];
+    const YAML::Node& TransSecond=Trans;
+    if(TransSecond.IsSequence()){
+        YAML::const_iterator it=TransSecond.begin();
+        for(unsigned int i=0;i<TransSecond.size();i++){
+            transMatrix[1][i]=it->as<float>();
+            it++;
+        }
+    }
+    Trans=configCamera["transMatrix"]["third"];
+    const YAML::Node& TransThird=Trans;
+    if(TransThird.IsSequence()){
+        YAML::const_iterator it=TransThird.begin();
+        for(unsigned int i=0;i<TransThird.size();i++){
+            transMatrix[2][i]=it->as<float>();
+            it++;
+        }
+    }
+    transMatrixFromR2L=(cv::Mat_<double>(4,4)<<transMatrix[0][0],transMatrix[0][1],transMatrix[0][2],transMatrix[0][3],
+                          transMatrix[1][0],transMatrix[1][1],transMatrix[1][2],transMatrix[1][3],
+                          transMatrix[2][0],transMatrix[2][1],transMatrix[2][2],transMatrix[2][3],
+                          0,0,0,1);
+
 
 
     projMatrixL=cv::Mat::zeros(3,4,CV_64F);
@@ -455,7 +489,7 @@ void arucoPose::AverageQuatertionfromMatchedMultiflame(std::vector<Tag*> BasedId
 
 void arucoPose::outputArucoPosture(){
     Eigen::Isometry3d ArucoTagPostureInCameraLeft=Eigen::Isometry3d::Identity();
-    Eigen::Quaterniond empty(0,0,0,0);
+
     Eigen::Matrix3d rotation;
     Eigen::Vector3d translate;
     std::vector<cv::Vec3d> rotationDraw,tevsDraw;
@@ -464,14 +498,13 @@ void arucoPose::outputArucoPosture(){
     _outputObjectInformation->clear();
     output.resize(ObjectForDetecting["objectNum"].as<unsigned int>());
 
-    //    int num2=0;
 
     std::vector<std::vector<cv::Point2f>> testmarkCorners;
     std::vector<int> testmarkIds;
-    //    int idL;
+
 
     for(size_t j=0;j<TagL.at(countofTag).size();j++){
-        if(TagL.at(countofTag).at(j).averagequaternion==empty)
+        if(fabs(TagL.at(countofTag).at(j).averagequaternion.norm()-1)>1e-5)
             continue;//test"is it empty?"
         else{
             rotation=TagL.at(countofTag).at(j).averagequaternion.toRotationMatrix();
@@ -482,7 +515,7 @@ void arucoPose::outputArucoPosture(){
             cv::Vec3d newRotVec(axisangle.axis()[0]*axisangle.angle(),axisangle.axis()[1]*axisangle.angle(),axisangle.axis()[2]*axisangle.angle());
             cv::Vec3d newTvecs(translate[0],translate[1],translate[2]);
             rotationDraw.push_back(newRotVec);
-            tevsDraw.push_back(newTvecs/1000);
+            tevsDraw.push_back(newTvecs/1000);//transfer unit from mm to m
 
 
             YAML::Node object;
@@ -501,6 +534,9 @@ void arucoPose::outputArucoPosture(){
             output.at(object["objectId"].as<int>()).outputObject.objectMarkId=TagL.at(countofTag).at(j).markId;
             output.at(object["objectId"].as<int>()).outputObject.objectTag=TagL.at(countofTag).at(j);
             output.at(object["objectId"].as<int>()).outputObject.objectPosture=ArucoTagPostureInCameraLeft;
+
+
+
             const YAML::Node& sizeNode=object["shape_size"];
             float size[3];
             if(sizeNode.IsSequence()){
@@ -514,21 +550,64 @@ void arucoPose::outputArucoPosture(){
                     output.at(object["objectId"].as<int>()).shape_size_obj[i]=it->as<float>();
                     it++;
                 }
-
+                //Unify to the same code Cooridante by rotation by translation
                 Eigen::Isometry3d transferArucotagToObject;
                 transferArucotagToObject.setIdentity();
                 Eigen::Vector3d linear;
-                linear<<output.at(object["objectId"].as<int>()).shape_size_obj[0]/2.0,0,0;
+                linear<<0,0,-output.at(object["objectId"].as<int>()).shape_size_obj[0]/2.0;
                 transferArucotagToObject.translation()=linear;
                 output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.objectPosture*transferArucotagToObject;
             }
 
 
+            //Unify to the same code Cooridante by rotation
+            int i=TagL.at(countofTag).at(j).markId-object["objectmarkId0"].as<int>();
+            Eigen::Isometry3d rotation2leastMarkPose;
+            rotation2leastMarkPose.setIdentity();
+
+            if(i){
+
+                Eigen::AngleAxisd rotation_vectoryY;
+                if(object["objectId"].as<int>()==0)
+                rotation_vectoryY=Eigen::AngleAxisd(-M_PI*i/2,Eigen::Vector3d(0,1,0));
+                if(object["objectId"].as<int>()==1)
+                rotation_vectoryY=Eigen::AngleAxisd(-M_PI*i/3,Eigen::Vector3d(0,1,0));
+                Eigen::Matrix3d rotation_vectorYMatrix=rotation_vectoryY.matrix();
+                rotation2leastMarkPose.rotate(rotation_vectorYMatrix);
+//                output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2leastMarkPose;
+            }
+
+            //rotate cooridantion from Tag detected result frame to object pose in plan frame
+            Eigen::Isometry3d rotation2MarkPoseInPlanSence;
+            rotation2MarkPoseInPlanSence.setIdentity();
+            Eigen::AngleAxisd rotation_vectoryX(-M_PI/2,Eigen::Vector3d(1,0,0));
+            Eigen::Matrix3d rotation_vectorXMatrix=rotation_vectoryX.matrix();
+            rotation2MarkPoseInPlanSence.rotate(rotation_vectorXMatrix);
+
+
+            Eigen::Isometry3d rotation2MarkPoseXYZNormal;
+            rotation2MarkPoseXYZNormal.setIdentity();
+            Eigen::AngleAxisd rotation_vectoryZ(-M_PI/2,Eigen::Vector3d(0,0,1));
+            Eigen::Matrix3d rotation_vectorXYZMatrix=rotation_vectoryZ.matrix();
+            rotation2MarkPoseXYZNormal.rotate(rotation_vectorXYZMatrix);
+//            output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2MarkPoseXYZNormal*rotation2MarkPoseInPlanSence*rotation2leastMarkPose;
+            output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2leastMarkPose*rotation2MarkPoseInPlanSence*rotation2MarkPoseXYZNormal;
+
             //config the outPut msg information of objectPose with messageRos__ever frame ever object
-            output.at(object["objectId"].as<int>()).outputObject.outputObjectPose=Eigen::Quaterniond(ArucoTagPostureInCameraLeft.rotation());
+
+            output.at(object["objectId"].as<int>()).outputObject.outputObjectPose=Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation());
             struct msgPose objectForMsg;
             objectForMsg.pose.outputObjectPose=output.at(object["objectId"].as<int>()).outputObject.outputObjectPose;
-            objectForMsg.pose.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object;
+
+
+            output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().x()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().x()/1000.0;
+            output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().y()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().y()/1000.0;
+            output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().z()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().z()/1000.0;
+            objectForMsg.pose.tranformationFromTag2Object.translation().x()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().x();
+            objectForMsg.pose.tranformationFromTag2Object.translation().y()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().y();
+            objectForMsg.pose.tranformationFromTag2Object.translation().z()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().z();
+
+
             objectForMsg.objectId=object["objectId"].as<int>();
             _outputObjectInformation->push_back(objectForMsg);
 
@@ -544,6 +623,7 @@ void arucoPose::outputArucoPosture(){
     for(size_t i=0;i<rotationDraw.size();i++){
         //                            cv::aruco::drawDetectedMarkers(FramefromCameraL,TagL.at(countofTag).at(j).markCorners,TagL.at(countofTag).at(j).markId);
         cv::aruco::drawAxis(FramefromCameraL,intrinsic_matrixL,distortion_matrixL,rotationDraw[i],tevsDraw[i],0.05);
+//        std::cout<<tevsDraw[i]<<std::endl;
     }
 //                cv::namedWindow("testFrame", 1);
 //                imshow("testFrame", FramefromCameraL);

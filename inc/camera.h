@@ -5,6 +5,8 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/opencv.hpp>
+#define Image_Width 1280
+#define Image_height 960
 
 class camera{
     public:
@@ -14,8 +16,6 @@ class camera{
 private:
     uchar HNY_CV_002 = 0;
 
-    const unsigned int Image_Width=1280;
-    const unsigned int Image_height=720;
 
 
     cv::VideoCapture cap;
