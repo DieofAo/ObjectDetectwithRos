@@ -6,20 +6,6 @@ arucoPose::~arucoPose(){
 }
 
 arucoPose::arucoPose(std::string& configYaml,std::vector<struct msgPose>& outputObjectInformation){
-//    distortion_matrixL=(cv::Mat_<double>(5,1)<<0.0128,-0.0343,0.0023,-0.00011,0);
-//    intrinsic_matrixL=(cv::Mat_<double>(3,3)<<921.6992,0,653.3826,
-//                         0,918.4418,364.1299,
-//                         0,0,1);
-//    distortion_matrixR=(cv::Mat_<double>(5,1)<<0.0135,-0.0339,0.0032,-0.00011,0);
-//    intrinsic_matrixR=(cv::Mat_<double>(3,3)<<920.5909,0,646.5033,
-//                         0,917.4791,370.2785,
-//                         0,0,1);
-//    transMatrixFromR2L=(cv::Mat_<double>(4,4)<<1.0,0.0023,1.4284e-4,-65.2972,
-//                          -0.0023,1.0,-0.0066,0.0304,
-//                          1.5806e-4,0.0066,1.0,-0.1852,
-//                          0,0,0,1);
-
-
 
     TagL.resize(NumFrameForMean,std::vector<Tag>(ArucoTagCount));
     TagR.resize(NumFrameForMean,std::vector<Tag>(ArucoTagCount));
@@ -33,12 +19,16 @@ arucoPose::arucoPose(std::string& configYaml,std::vector<struct msgPose>& output
     _outputObjectInformation=&outputObjectInformation;
 
 }
+
 void arucoPose::configCameraInformation(int cameraId){
     YAML::Node configCamera;
     if(cameraId==ObjectForDetecting["handCameraId"].as<int>())
         configCamera=YAML::LoadFile("/home/jqzlca/workspace/catkin_ws/src/jqz_ws/object_detector/config/HandCamera.yaml");
     if(cameraId==ObjectForDetecting["globalCameraId"].as<int>())
         configCamera=YAML::LoadFile("/home/jqzlca/workspace/catkin_ws/src/jqz_ws/object_detector/config/GlobalCamera.yaml");
+
+
+
     const YAML::Node& sizeNodeL=configCamera["distortionMatrixL"];
     float sizeL[5];
     if(sizeNodeL.IsSequence()){
@@ -62,100 +52,35 @@ void arucoPose::configCameraInformation(int cameraId){
     distortion_matrixR=(cv::Mat_<double>(5,1)<<sizeR[0],sizeR[1],sizeR[2],sizeR[3],sizeR[4]);
 
     float intrinRMatrix[3][3];
-    YAML::Node intrinR=configCamera["intrinsicMatrixR"]["first"];
-    const YAML::Node& intrinRFirst=intrinR;
-    if(intrinRFirst.IsSequence()){
-        YAML::const_iterator it=intrinRFirst.begin();
-        for(unsigned int i=0;i<intrinRFirst.size();i++){
-            intrinRMatrix[0][i]=it->as<float>();
-            it++;
-        }
-    }
-    intrinR=configCamera["intrinsicMatrixR"]["second"];
-    const YAML::Node& intrinRSecond=intrinR;
-    if(intrinRSecond.IsSequence()){
-        YAML::const_iterator it=intrinRSecond.begin();
-        for(unsigned int i=0;i<intrinRSecond.size();i++){
-            intrinRMatrix[1][i]=it->as<float>();
-            it++;
-        }
-    }
-    intrinR=configCamera["intrinsicMatrixR"]["third"];
-    const YAML::Node& intrinRThird=intrinR;
-    if(intrinRThird.IsSequence()){
-        YAML::const_iterator it=intrinRThird.begin();
-        for(unsigned int i=0;i<intrinRThird.size();i++){
-            intrinRMatrix[2][i]=it->as<float>();
-            it++;
-        }
-    }
+    configYamlParams(configCamera["intrinsicMatrixR"]["first"],intrinRMatrix[0]);
+    configYamlParams(configCamera["intrinsicMatrixR"]["second"],intrinRMatrix[1]);
+    configYamlParams(configCamera["intrinsicMatrixR"]["third"],intrinRMatrix[2]);
+
+
     intrinsic_matrixR=(cv::Mat_<double>(3,3)<<intrinRMatrix[0][0],intrinRMatrix[0][1],intrinRMatrix[0][2],
                          intrinRMatrix[1][0],intrinRMatrix[1][1],intrinRMatrix[1][2],
                          intrinRMatrix[2][0],intrinRMatrix[2][1],intrinRMatrix[2][2]);
 
     float intrinLMatrix[3][3];
-    YAML::Node intrinL=configCamera["intrinsicMatrixL"]["first"];
-    const YAML::Node& intrinLFirst=intrinL;
-    if(intrinLFirst.IsSequence()){
-        YAML::const_iterator it=intrinLFirst.begin();
-        for(unsigned int i=0;i<intrinLFirst.size();i++){
-            intrinLMatrix[0][i]=it->as<float>();
-            it++;
-        }
-    }
-    intrinL=configCamera["intrinsicMatrixL"]["second"];
-    const YAML::Node& intrinLSecond=intrinL;
-    if(intrinLSecond.IsSequence()){
-        YAML::const_iterator it=intrinLSecond.begin();
-        for(unsigned int i=0;i<intrinLSecond.size();i++){
-            intrinLMatrix[1][i]=it->as<float>();
-            it++;
-        }
-    }
-    intrinL=configCamera["intrinsicMatrixL"]["third"];
-    const YAML::Node& intrinLThird=intrinL;
-    if(intrinLThird.IsSequence()){
-        YAML::const_iterator it=intrinLThird.begin();
-        for(unsigned int i=0;i<intrinLThird.size();i++){
-            intrinLMatrix[2][i]=it->as<float>();
-            it++;
-        }
-    }
+    configYamlParams(configCamera["intrinsicMatrixL"]["first"],intrinLMatrix[0]);
+    configYamlParams(configCamera["intrinsicMatrixL"]["second"],intrinLMatrix[1]);
+    configYamlParams(configCamera["intrinsicMatrixL"]["third"],intrinLMatrix[2]);
+
+
     intrinsic_matrixL=(cv::Mat_<double>(3,3)<<intrinLMatrix[0][0],intrinLMatrix[0][1],intrinLMatrix[0][2],
                          intrinLMatrix[1][0],intrinLMatrix[1][1],intrinLMatrix[1][2],
                          intrinLMatrix[2][0],intrinLMatrix[2][1],intrinLMatrix[2][2]);
 
-    float transMatrix[3][4];
-    YAML::Node Trans=configCamera["transMatrix"]["first"];
-    const YAML::Node& TransFirst=Trans;
-    if(TransFirst.IsSequence()){
-        YAML::const_iterator it=TransFirst.begin();
-        for(unsigned int i=0;i<TransFirst.size();i++){
-            transMatrix[0][i]=it->as<float>();
-            it++;
-        }
-    }
-    Trans=configCamera["transMatrix"]["second"];
-    const YAML::Node& TransSecond=Trans;
-    if(TransSecond.IsSequence()){
-        YAML::const_iterator it=TransSecond.begin();
-        for(unsigned int i=0;i<TransSecond.size();i++){
-            transMatrix[1][i]=it->as<float>();
-            it++;
-        }
-    }
-    Trans=configCamera["transMatrix"]["third"];
-    const YAML::Node& TransThird=Trans;
-    if(TransThird.IsSequence()){
-        YAML::const_iterator it=TransThird.begin();
-        for(unsigned int i=0;i<TransThird.size();i++){
-            transMatrix[2][i]=it->as<float>();
-            it++;
-        }
-    }
-    transMatrixFromR2L=(cv::Mat_<double>(4,4)<<transMatrix[0][0],transMatrix[0][1],transMatrix[0][2],transMatrix[0][3],
-                          transMatrix[1][0],transMatrix[1][1],transMatrix[1][2],transMatrix[1][3],
-                          transMatrix[2][0],transMatrix[2][1],transMatrix[2][2],transMatrix[2][3],
+    float transMatrix[4][3];
+    configYamlParams(configCamera["transMatrix"]["first"],transMatrix[0]);
+    configYamlParams(configCamera["transMatrix"]["second"],transMatrix[1]);
+    configYamlParams(configCamera["transMatrix"]["third"],transMatrix[2]);
+    configYamlParams(configCamera["transMatrix"]["translation"],transMatrix[3]);
+
+
+    transMatrixFromR2L=(cv::Mat_<double>(4,4)<<transMatrix[0][0],transMatrix[0][1],transMatrix[0][2],transMatrix[3][0],
+                          transMatrix[1][0],transMatrix[1][1],transMatrix[1][2],transMatrix[3][1],
+                          transMatrix[2][0],transMatrix[2][1],transMatrix[2][2],transMatrix[3][2],
                           0,0,0,1);
 
 
@@ -214,18 +139,18 @@ void arucoPose::detectArucoTagPosition(cv::Mat& FrameDetect,
     std::vector<std::vector<cv::Point2f>> markCorners;
     std::vector<int> markIds;
     cv::Mat undistortedFrame;
-    std::vector<cv::Vec3d> rvecs,tvecs;
+//    std::vector<cv::Vec3d> rvecs,tvecs;
+        cv::undistort(FrameDetect,undistortedFrame,intrinsic_matrix,distortion_matrix);
+        FrameDetect=undistortedFrame.clone();
     cv::aruco::detectMarkers(FrameDetect, dictionary, markCorners, markIds);
-    cv::undistort(FrameDetect,undistortedFrame,intrinsic_matrix,distortion_matrix);
-    FrameDetect=undistortedFrame.clone();
+//    cv::undistort(FrameDetect,undistortedFrame,intrinsic_matrix,distortion_matrix);
+//    FrameDetect=undistortedFrame.clone();
     cv::Mat undistortedDistortion_matrix=(cv::Mat_<double>(5,1)<<0,0,0,0,0);
     if(markIds.size()>0){
-        //        cv::aruco::drawDetectedMarkers(FrameDetect,markCorners,markIds);
-        cv::aruco::estimatePoseSingleMarkers(markCorners,0.029,intrinsic_matrix,distortion_matrix,rvecs,tvecs);
+//        cv::aruco::estimatePoseSingleMarkers(markCorners,0.029,intrinsic_matrix,distortion_matrix,rvecs,tvecs);
         for(unsigned int i=0;i<markIds.size();i++){
-            //                      cv::aruco::drawAxis(FrameDetect,intrinsic_matrix,distortion_matrix,rvecs[i],tvecs[i],0.1);
-            singalFrameDetected.at(i).rotVec=rvecs[i];
-            singalFrameDetected.at(i).tvecs=tvecs[i];
+//            singalFrameDetected.at(i).rotVec=rvecs[i];
+//            singalFrameDetected.at(i).tvecs=tvecs[i];
             singalFrameDetected.at(i).markId=markIds.at(i);
             singalFrameDetected.at(i).markCorners=markCorners.at(i);
         }
@@ -308,24 +233,25 @@ void arucoPose::TriangulationRangingMethod(){
             if(TagL.at(countofTag).at(i).markId==TagR.at(countofTag).at(j).markId){
                 cv::Mat projPointsL=(cv::Mat_<float>(2,1)<<TagL.at(countofTag).at(i).centerPoint.x,TagL.at(countofTag).at(i).centerPoint.y);
                 cv::Mat projPointsR=(cv::Mat_<float>(2,1)<<TagR.at(countofTag).at(j).centerPoint.x,TagR.at(countofTag).at(j).centerPoint.y);
-                cv::triangulatePoints(projMatrixL,projMatrixR,projPointsL,projPointsR,points4D);
+                cv::triangulatePoints(projMatrixL,projMatrixR,projPointsL,projPointsR,points4D);                
                 //                if(points4D.at<float>(3,0)>1e-5){
                 cv::Point3d point3d(points4D.at<float>(0,0)/points4D.at<float>(3,0),
                                     points4D.at<float>(1,0)/points4D.at<float>(3,0),
                                     points4D.at<float>(2,0)/points4D.at<float>(3,0));
+
                 TagL.at(countofTag).at(i).reconstructCenterPoint=point3d;//only in TagL
                 //                }
                 for(unsigned int k=0;k<4;k++){
                     cv::Mat projPointsL=(cv::Mat_<float>(2,1)<<TagL.at(countofTag).at(i).markCorners.at(k).x,TagL.at(countofTag).at(i).markCorners.at(k).y);
                     cv::Mat projPointsR=(cv::Mat_<float>(2,1)<<TagR.at(countofTag).at(j).markCorners.at(k).x,TagR.at(countofTag).at(j).markCorners.at(k).y);
                     cv::triangulatePoints(projMatrixL,projMatrixR,projPointsL,projPointsR,points4D);
-                    //                    cv::convertPointsFromHomogeneous(points4D.t(),points3D);
-                    //                    if(points4D.at<float>(3,0)>1e-5){
                     cv::Point3d point3d(points4D.at<float>(0,0)/points4D.at<float>(3,0),
                                         points4D.at<float>(1,0)/points4D.at<float>(3,0),
                                         points4D.at<float>(2,0)/points4D.at<float>(3,0));
+
+
                     TagL.at(countofTag).at(i).reconstructMarkCorners.push_back(point3d);//only in TagL
-                    //                    }
+
                 }
             }
         }
@@ -385,9 +311,6 @@ void arucoPose::ProcessDimensionBasedMarkId(){
 
 void arucoPose::chooseStableArucoTag(std::vector<Tag*>& ForChooseStableArucoTag){
     for (size_t i=0;i<ForChooseStableArucoTag.size();i++) {
-        //        try {
-        //            Eigen::Isometry3d a=ForChooseStableArucoTag.at(i)->PostureforQuatenionVector;
-        //        } catch (...) {
         Eigen::Matrix3d reconstructR;
         Eigen::Isometry3d constructIsometry,cameraLeftIsometry;
         cv::Mat rotationMatrix;
@@ -396,13 +319,15 @@ void arucoPose::chooseStableArucoTag(std::vector<Tag*>& ForChooseStableArucoTag)
         constructIsometry=Eigen::Isometry3d::Identity();
         cameraLeftIsometry=Eigen::Isometry3d::Identity();
         constructIsometry.linear()=reconstructR;//check
-        cv::Rodrigues(ForChooseStableArucoTag.at(i)->rotVec,rotationMatrix);
-        cv::cv2eigen(rotationMatrix,eigenRotationMatrix);
-        cameraLeftIsometry.linear()=eigenRotationMatrix;
-        if(poseDiff_fromFrame1ToFrame2InBase(constructIsometry,cameraLeftIsometry)>20*M_PI/180)
-            ForChooseStableArucoTag.at(i)->PostureforQuatenionVector=constructIsometry;
-        else
-            ForChooseStableArucoTag.at(i)->PostureforQuatenionVector=cameraLeftIsometry;
+//        cv::Rodrigues(ForChooseStableArucoTag.at(i)->rotVec,rotationMatrix);
+//        cv::cv2eigen(rotationMatrix,eigenRotationMatrix);
+//        cameraLeftIsometry.linear()=eigenRotationMatrix;
+
+        ForChooseStableArucoTag.at(i)->PostureforQuatenionVector=constructIsometry;
+//        if(poseDiff_fromFrame1ToFrame2InBase(constructIsometry,cameraLeftIsometry)>20*M_PI/180)
+//            ForChooseStableArucoTag.at(i)->PostureforQuatenionVector=constructIsometry;
+//        else
+//            ForChooseStableArucoTag.at(i)->PostureforQuatenionVector=cameraLeftIsometry;
     }
 }
 
@@ -412,16 +337,26 @@ void arucoPose::calculateNewCoordinatebyReconstructCorners(Tag* ForCalculateNewC
     xAxis.x()=(ForCalculateNewCoordinate->reconstructMarkCorners[1]-ForCalculateNewCoordinate->reconstructMarkCorners[0]).x;
     xAxis.y()=(ForCalculateNewCoordinate->reconstructMarkCorners[1]-ForCalculateNewCoordinate->reconstructMarkCorners[0]).y;
     xAxis.z()=(ForCalculateNewCoordinate->reconstructMarkCorners[1]-ForCalculateNewCoordinate->reconstructMarkCorners[0]).z;
-    yAxis.x()=(ForCalculateNewCoordinate->reconstructMarkCorners[3]-ForCalculateNewCoordinate->reconstructMarkCorners[0]).x;
-    yAxis.y()=(ForCalculateNewCoordinate->reconstructMarkCorners[3]-ForCalculateNewCoordinate->reconstructMarkCorners[0]).y;
-    yAxis.z()=(ForCalculateNewCoordinate->reconstructMarkCorners[3]-ForCalculateNewCoordinate->reconstructMarkCorners[0]).z;
+    yAxis.x()=(ForCalculateNewCoordinate->reconstructMarkCorners[0]-ForCalculateNewCoordinate->reconstructMarkCorners[3]).x;
+    yAxis.y()=(ForCalculateNewCoordinate->reconstructMarkCorners[0]-ForCalculateNewCoordinate->reconstructMarkCorners[3]).y;
+    yAxis.z()=(ForCalculateNewCoordinate->reconstructMarkCorners[0]-ForCalculateNewCoordinate->reconstructMarkCorners[3]).z;
 
-    zAxis=yAxis.cross(xAxis);
-    yAxis=xAxis.cross(zAxis);//solve the xAxis is not orthogonal with yAxis
+    zAxis=xAxis.cross(yAxis);
+    yAxis=zAxis.cross(xAxis);//solve the xAxis is not orthogonal with yAxis
 
-    NewRotation.col(0)=xAxis.normalized();//or svd
+    NewRotation.col(0)=xAxis.normalized();
     NewRotation.col(1)=yAxis.normalized();
-    NewRotation.col(2)=zAxis.normalized();//normailize?
+    NewRotation.col(2)=zAxis.normalized();
+
+
+//    std::cout<<"xAxis:"<<xAxis.x()<<","<<xAxis.y()<<","<<xAxis.z()<<std::endl;
+//    std::cout<<"yAxis:"<<yAxis.x()<<","<<yAxis.y()<<","<<yAxis.z()<<std::endl;
+
+
+
+//    std::cout<<NewRotation.col(0).x()<<","<<NewRotation.col(0).y()<<","<<NewRotation.col(0).z()<<std::endl;
+//    std::cout<<NewRotation.col(1).x()<<","<<NewRotation.col(1).y()<<","<<NewRotation.col(1).z()<<std::endl;
+//    std::cout<<NewRotation.col(2).x()<<","<<NewRotation.col(2).y()<<","<<NewRotation.col(2).z()<<std::endl;
 
 }
 
@@ -541,10 +476,6 @@ void arucoPose::outputArucoPosture(){
             float size[3];
             if(sizeNode.IsSequence()){
                 YAML::const_iterator it=sizeNode.begin();
-                //      std::vector<float> sizeVector;
-                //      for(const YAML::Node size:sizeNode)
-                //          sizeVector.push_back(size.as<float>());
-
                 for(unsigned int i=0;i<sizeNode.size();i++){
                     size[i]=it->as<float>();
                     output.at(object["objectId"].as<int>()).shape_size_obj[i]=it->as<float>();
@@ -558,45 +489,6 @@ void arucoPose::outputArucoPosture(){
                 transferArucotagToObject.translation()=linear;
                 output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.objectPosture*transferArucotagToObject;
             }
-//            std::cout<<"1:"<<Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation()).x()<<","<<
-//                Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation()).y()<<","<<
-//                Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation()).z()<<","<<
-//                Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation()).w()<<std::endl;
-
-            //Unify to the same code Cooridante by rotation
-            int i=TagL.at(countofTag).at(j).markId-object["objectmarkId0"].as<int>();
-            Eigen::Isometry3d rotation2leastMarkPose;
-            rotation2leastMarkPose.setIdentity();
-
-            if(i){
-
-                Eigen::AngleAxisd rotation_vectoryY;
-                if(object["objectId"].as<int>()==0)
-                rotation_vectoryY=Eigen::AngleAxisd(-M_PI*i/2,Eigen::Vector3d(0,1,0));
-                if(object["objectId"].as<int>()==1)
-                rotation_vectoryY=Eigen::AngleAxisd(-M_PI*i/3,Eigen::Vector3d(0,1,0));
-//                std::cout<<i<<std::endl;
-                Eigen::Matrix3d rotation_vectorYMatrix=rotation_vectoryY.matrix();
-                rotation2leastMarkPose.rotate(rotation_vectorYMatrix);
-//                std::cout<<"0"<<(Eigen::Quaterniond(rotation_vectorYMatrix)).x()<<std::endl;
-//                output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2leastMarkPose;
-            }
-
-            //rotate cooridantion from Tag detected result frame to object pose in plan frame
-            Eigen::Isometry3d rotation2MarkPoseInPlanSence;
-            rotation2MarkPoseInPlanSence.setIdentity();
-            Eigen::AngleAxisd rotation_vectoryX(-M_PI/2,Eigen::Vector3d(1,0,0));
-            Eigen::Matrix3d rotation_vectorXMatrix=rotation_vectoryX.matrix();
-            rotation2MarkPoseInPlanSence.rotate(rotation_vectorXMatrix);
-
-
-            Eigen::Isometry3d rotation2MarkPoseXYZNormal;
-            rotation2MarkPoseXYZNormal.setIdentity();
-            Eigen::AngleAxisd rotation_vectoryZ(-M_PI/2,Eigen::Vector3d(0,0,1));
-            Eigen::Matrix3d rotation_vectorXYZMatrix=rotation_vectoryZ.matrix();
-            rotation2MarkPoseXYZNormal.rotate(rotation_vectorXYZMatrix);
-//            output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2MarkPoseXYZNormal*rotation2MarkPoseInPlanSence*rotation2leastMarkPose;
-            output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2leastMarkPose*rotation2MarkPoseInPlanSence*rotation2MarkPoseXYZNormal;
 
             //Unify to the same code Cooridante by rotation
             int i=TagL.at(countofTag).at(j).markId-object["objectmarkId0"].as<int>();
@@ -636,12 +528,7 @@ void arucoPose::outputArucoPosture(){
             output.at(object["objectId"].as<int>()).outputObject.outputObjectPose=Eigen::Quaterniond(output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.rotation());
             struct msgPose objectForMsg;
             objectForMsg.pose.outputObjectPose=output.at(object["objectId"].as<int>()).outputObject.outputObjectPose;
-<<<<<<< HEAD
 
-=======
-//            std::cout<<"1"<<output.at(object["objectId"].as<int>()).outputObject.outputObjectPose.x()<<std::endl;
-//            std::cout<<"2"<<objectForMsg.pose.outputObjectPose.x()<<std::endl;
->>>>>>> ac31f4b697487a2d0be244eb40c62f504450195c
 
             output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().x()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().x()/1000.0;
             output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().y()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().y()/1000.0;
@@ -670,4 +557,14 @@ void arucoPose::outputArucoPosture(){
     }
 //                cv::namedWindow("testFrame", 1);
 //                imshow("testFrame", FramefromCameraL);
+}
+
+void configYamlParams(const YAML::Node& ParamsYaml,float (&ConfigMatrix)[3]){
+    if(ParamsYaml.IsSequence()){
+        YAML::const_iterator it=ParamsYaml.begin();
+        for(unsigned int i=0;i<ParamsYaml.size();i++){
+            ConfigMatrix[i]=it->as<float>();
+            it++;
+        }
+    }
 }

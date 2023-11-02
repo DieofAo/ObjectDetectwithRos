@@ -11,7 +11,7 @@
 
 
 const unsigned int ArucoTagCount=48;
-const unsigned int NumFrameForMean=30;
+const unsigned int NumFrameForMean=10;
 const unsigned int MiniumNumFrameForMean=NumFrameForMean/2;
 const float PrintedArucoSize=0.029;
 //const unsigned int objectNum=3;
@@ -91,4 +91,5 @@ private:
     void outputArucoPosture();
 
 };
+void configYamlParams(const YAML::Node& ParamsYaml,float (&ConfigMatrix)[3]);
 #endif

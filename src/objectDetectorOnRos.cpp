@@ -21,6 +21,8 @@ objectDetectorOnRos::objectDetectorOnRos(ros::NodeHandle& nh,int Id):_nh(),_it(_
 
     PositionDetect=new arucoPose(config_Yaml,outputObjectInformation);
     steroCamera=new camera(cameraId);
+    if(cameraId==0)
+        steroCamera2=new camera(8);
 
     pubGlobalLRaw=new image_transport::Publisher(_it.advertise("GlobalLRaw", 5));
     pubGlobalRRaw=new image_transport::Publisher(_it.advertise("GlobalRRaw", 5));
@@ -34,10 +36,15 @@ objectDetectorOnRos::objectDetectorOnRos(ros::NodeHandle& nh,int Id):_nh(),_it(_
 }
 
 void objectDetectorOnRos::run(int cameraId){
-    cv::Mat leftFrame,rightFrame;
+    cv::Mat leftFrame,tempRightFrame,tempLeftFrame,rightFrame;
 
+    if(cameraId==0){
+        steroCamera->imageRetrive(leftFrame,tempRightFrame);
+        steroCamera2->imageRetrive(tempLeftFrame,rightFrame);
+    }
+    else
+        steroCamera->imageRetrive(leftFrame,rightFrame);
 
-    steroCamera->imageRetrive(leftFrame,rightFrame);
 
     PositionDetect->runDetectArucoTagPosByStereoCamera(leftFrame,rightFrame,cameraId);
 

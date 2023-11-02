@@ -14,6 +14,7 @@ public:
     int cameraId;
     arucoPose *PositionDetect;
     camera *steroCamera;
+    camera *steroCamera2;
     ros::NodeHandle _nh;
     image_transport::ImageTransport _it;
     image_transport::Publisher *pubGlobalLRaw,*pubGlobalRRaw,*pubGlobalResult;

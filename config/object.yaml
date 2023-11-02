@@ -10,7 +10,7 @@ object1:
  objectmarkId2: 22
  objectmarkId3: 23
  shape_type: 2
- shape_size: [42,42,42]
+ shape_size: [36.8,36.8,36.8]
 object2:
  objectId: 1
  numofmark: 6
@@ -21,4 +21,4 @@ object2:
  objectmarkId4: 28
  objectmarkId5: 29
  shape_type: 2 
- shape_size: [70.4,70.4,5]
+ shape_size: [70.6,70.6,5]
