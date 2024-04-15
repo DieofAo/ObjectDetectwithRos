@@ -12,6 +12,7 @@ objectDetectorOnRos::~objectDetectorOnRos(){
     delete msg;
 
 }
+//hand camera code 25-26;98-103
 
 objectDetectorOnRos::objectDetectorOnRos(ros::NodeHandle& nh,int Id):_nh(),_it(_nh){
     _nh=nh;
@@ -22,7 +23,7 @@ objectDetectorOnRos::objectDetectorOnRos(ros::NodeHandle& nh,int Id):_nh(),_it(_
     PositionDetect=new arucoPose(config_Yaml,outputObjectInformation);
     steroCamera=new camera(cameraId);
     if(cameraId==0)
-        steroCamera2=new camera(8);
+        steroCamera2=new camera(4);
 
     pubGlobalLRaw=new image_transport::Publisher(_it.advertise("GlobalLRaw", 5));
     pubGlobalRRaw=new image_transport::Publisher(_it.advertise("GlobalRRaw", 5));
@@ -94,12 +95,12 @@ void objectDetectorOnRos::rosImageView(cv::Mat& imageLRaw,
             if(!ArucoDetectedLeftFrame.empty())
                 pubGlobalResult->publish(msgResult);
         }
-        if(cameraId==4){
-            pubHandLRaw->publish(msgLRaw);
-            pubHandRRaw->publish(msgRRaw);
-            if(!ArucoDetectedLeftFrame.empty())
-                pubHandResult->publish(msgResult);
-        }
+//        if(cameraId==4){
+//            pubHandLRaw->publish(msgLRaw);
+//            pubHandRRaw->publish(msgRRaw);
+//            if(!ArucoDetectedLeftFrame.empty())
+//                pubHandResult->publish(msgResult);
+//        }
 
         rate.sleep();
 

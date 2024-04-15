@@ -240,6 +240,7 @@ void arucoPose::TriangulationRangingMethod(){
                                     points4D.at<float>(2,0)/points4D.at<float>(3,0));
 
                 TagL.at(countofTag).at(i).reconstructCenterPoint=point3d;//only in TagL
+                std::cout<<"center point: "<<point3d<<std::endl;
                 //                }
                 for(unsigned int k=0;k<4;k++){
                     cv::Mat projPointsL=(cv::Mat_<float>(2,1)<<TagL.at(countofTag).at(i).markCorners.at(k).x,TagL.at(countofTag).at(i).markCorners.at(k).y);
@@ -248,6 +249,7 @@ void arucoPose::TriangulationRangingMethod(){
                     cv::Point3d point3d(points4D.at<float>(0,0)/points4D.at<float>(3,0),
                                         points4D.at<float>(1,0)/points4D.at<float>(3,0),
                                         points4D.at<float>(2,0)/points4D.at<float>(3,0));
+                    std::cout<<k<<"th corner point: "<<point3d<<std::endl;
 
 
                     TagL.at(countofTag).at(i).reconstructMarkCorners.push_back(point3d);//only in TagL
@@ -265,7 +267,6 @@ void arucoPose::crossCenterPoint(Tag& TagForCrossCenter){
     cv::Point2f currentPositionMeasured;//arucotag中心点二维坐标
     for(int j=0;j<4;j++)
         arucoTagCorner.push_back(cv::Point3f(TagForCrossCenter.markCorners.at(j).x,TagForCrossCenter.markCorners.at(j).y,1));
-
     arucoTagCenterMeasured = (arucoTagCorner.at(0).cross(arucoTagCorner.at(2))).cross((arucoTagCorner.at(1).cross(arucoTagCorner.at(3))));
     currentPositionMeasured.x = arucoTagCenterMeasured.x / arucoTagCenterMeasured.z;
     currentPositionMeasured.y = arucoTagCenterMeasured.y / arucoTagCenterMeasured.z;
@@ -423,6 +424,7 @@ void arucoPose::AverageQuatertionfromMatchedMultiflame(std::vector<Tag*> BasedId
 
 
 void arucoPose::outputArucoPosture(){
+    //556 print the result of test
     Eigen::Isometry3d ArucoTagPostureInCameraLeft=Eigen::Isometry3d::Identity();
 
     Eigen::Matrix3d rotation;
@@ -437,6 +439,11 @@ void arucoPose::outputArucoPosture(){
     std::vector<std::vector<cv::Point2f>> testmarkCorners;
     std::vector<int> testmarkIds;
 
+    Eigen::Vector3d mark3,mark4;
+    mark3.setZero();
+    mark4.setZero();
+
+
 
     for(size_t j=0;j<TagL.at(countofTag).size();j++){
         if(fabs(TagL.at(countofTag).at(j).averagequaternion.norm()-1)>1e-5)
@@ -445,6 +452,7 @@ void arucoPose::outputArucoPosture(){
             rotation=TagL.at(countofTag).at(j).averagequaternion.toRotationMatrix();
             ArucoTagPostureInCameraLeft.linear()=rotation;
             translate=Eigen::Vector3d(TagL.at(countofTag).at(j).reconstructCenterPoint.x,TagL.at(countofTag).at(j).reconstructCenterPoint.y,TagL.at(countofTag).at(j).reconstructCenterPoint.z);
+            std::cout<<translate<<std::endl;
             ArucoTagPostureInCameraLeft.translation()=translate;
             Eigen::AngleAxisd axisangle(rotation);
             cv::Vec3d newRotVec(axisangle.axis()[0]*axisangle.angle(),axisangle.axis()[1]*axisangle.angle(),axisangle.axis()[2]*axisangle.angle());
@@ -502,6 +510,12 @@ void arucoPose::outputArucoPosture(){
                 rotation_vectoryY=Eigen::AngleAxisd(-M_PI*i/2,Eigen::Vector3d(0,1,0));
                 if(object["objectId"].as<int>()==1)
                 rotation_vectoryY=Eigen::AngleAxisd(-M_PI*i/3,Eigen::Vector3d(0,1,0));
+                if(object["objectId"].as<int>()==2)
+                rotation_vectoryY.Identity();
+                if(object["objectId"].as<int>()==3)
+                rotation_vectoryY.Identity();
+                if(object["objectId"].as<int>()==4)
+                rotation_vectoryY.Identity();
                 Eigen::Matrix3d rotation_vectorYMatrix=rotation_vectoryY.matrix();
                 rotation2leastMarkPose.rotate(rotation_vectorYMatrix);
 //                output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object*rotation2leastMarkPose;
@@ -536,7 +550,21 @@ void arucoPose::outputArucoPosture(){
             objectForMsg.pose.tranformationFromTag2Object.translation().x()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().x();
             objectForMsg.pose.tranformationFromTag2Object.translation().y()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().y();
             objectForMsg.pose.tranformationFromTag2Object.translation().z()=output.at(object["objectId"].as<int>()).outputObject.tranformationFromTag2Object.translation().z();
+            //for verify the successful rate of this detect node
+            if(TagL.at(countofTag).at(j).markId==3){
+                mark3.x()=objectForMsg.pose.tranformationFromTag2Object.translation().x();
+                mark3.y()=objectForMsg.pose.tranformationFromTag2Object.translation().y();
+                mark3.z()=objectForMsg.pose.tranformationFromTag2Object.translation().z();
+            }
+            if(TagL.at(countofTag).at(j).markId==4){
+                mark4.x()=objectForMsg.pose.tranformationFromTag2Object.translation().x();
+                mark4.y()=objectForMsg.pose.tranformationFromTag2Object.translation().y();
+                mark4.z()=objectForMsg.pose.tranformationFromTag2Object.translation().z();
+            }
+//            std::cout<<sqrt((mark4.x()-mark3.x())*(mark4.x()-mark3.x())+(mark4.y()-mark3.y())*(mark4.y()-mark3.y())+(mark4.z()-mark3.z())*(mark4.z()-mark3.z()))<<std::endl;
 
+//            if(object["objectId"].as<int>()==2)
+//                std::cout<<sqrt()
 
             objectForMsg.objectId=object["objectId"].as<int>();
             _outputObjectInformation->push_back(objectForMsg);

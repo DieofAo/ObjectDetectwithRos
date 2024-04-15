@@ -1,7 +1,7 @@
 #object shape_type 1->cylinder，2->cuboid，3->sphere5
 handCameraId: 4
 globalCameraId: 0
-objectNum: 2
+objectNum: 5
 object1:
  objectId: 0
  numofmark: 4
@@ -10,7 +10,7 @@ object1:
  objectmarkId2: 22
  objectmarkId3: 23
  shape_type: 2
- shape_size: [36.8,36.8,36.8]
+ shape_size: [32,32,32]
 object2:
  objectId: 1
  numofmark: 6
@@ -21,4 +21,24 @@ object2:
  objectmarkId4: 28
  objectmarkId5: 29
  shape_type: 2 
- shape_size: [70.6,70.6,5]
+ shape_size: [71,71,71]
+object3:
+ objectId: 2
+ numofmark: 2
+ objectmarkId0: 3
+ objectmarkId1: 4
+ shape_type: 2 
+ shape_size: [0,0,0]
+object4:
+ objectId: 3
+ numofmark: 1
+ objectmarkId0: 30
+ shape_type: 2
+ shape_size: [15.8,15.8,15.8]
+object5:
+ objectId: 4
+ numofmark: 1
+ objectmarkId0: 31
+ shape_type: 2
+ shape_size: [43,47,47]
+ 

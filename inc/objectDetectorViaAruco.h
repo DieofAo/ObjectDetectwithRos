@@ -11,7 +11,7 @@
 
 
 const unsigned int ArucoTagCount=48;
-const unsigned int NumFrameForMean=10;
+const unsigned int NumFrameForMean=8;
 const unsigned int MiniumNumFrameForMean=NumFrameForMean/2;
 const float PrintedArucoSize=0.029;
 //const unsigned int objectNum=3;

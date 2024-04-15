@@ -1,6 +1,6 @@
 #include"objectDetectorOnRos.h"
 
-
+//stereo camera 22-24;26;13
 int main(int argc, char** argv){
 
     ros::init(argc, argv, "objectDetectImage_node");
@@ -10,7 +10,7 @@ int main(int argc, char** argv){
     nh.getParam("gloabalCameraId",globalCameraId);
     nh.getParam("handCameraId",handCameraId);
 
-    objectDetectorOnRos hand_detector(nh,handCameraId);
+//    objectDetectorOnRos hand_detector(nh,handCameraId);
     objectDetectorOnRos global_detector(nh,globalCameraId);
 
     ros::Rate looprate(30);
@@ -19,11 +19,11 @@ int main(int argc, char** argv){
         std::thread global=std::thread([&](){
             global_detector.run(globalCameraId);
         });
-        std::thread hand=std::thread([&](){
-            hand_detector.run(handCameraId);
-        });
+//        std::thread hand=std::thread([&](){
+//            hand_detector.run(handCameraId);
+//        });
         global.join();
-        hand.join();
+//        hand.join();
         looprate.sleep();
 
     }
